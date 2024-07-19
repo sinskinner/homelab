@@ -1,0 +1,9 @@
+networking:
+  hypervisor:
+    network: 192.168.161.0/24
+    vid: 161
+    hosts:
+      curse: 192.168.161.1/24
+      impel: 192.168.161.2/24
+      sacrilege: 192.168.161.3/24
+      vengeance: 192.168.161.4/24

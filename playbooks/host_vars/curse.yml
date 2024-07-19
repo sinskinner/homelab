@@ -1,0 +1,6 @@
+#@role::debian
+fancontrol: true
+intel: true
+iommu: true
+modules:
+  - nct6775

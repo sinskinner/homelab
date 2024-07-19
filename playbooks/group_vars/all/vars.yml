@@ -1,0 +1,11 @@
+#@role:all
+ansible_python_interpreter: auto_silent
+#@role::debian
+intel: true
+fancontrol: false
+iommu: false
+nvidia: false
+apt:
+  cache: 3600
+services:
+  dns: 192.168.168.53

@@ -1,0 +1,6 @@
+- name: hypervisor_playbook
+  hosts: hypervisor
+  gather_facts: false
+  roles:
+    - common
+    - proxmox

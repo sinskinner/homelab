@@ -1,0 +1,10 @@
+hypervisor:
+  hosts:
+    vengeance:
+      ansible_host: 192.168.15.104
+    sacrilege:
+      ansible_host: 192.168.15.103
+    impel:
+      ansible_host: 192.168.15.102
+    curse:
+      ansible_host: 192.168.15.101

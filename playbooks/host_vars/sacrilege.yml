@@ -1,0 +1,5 @@
+iommu: true
+intel: true
+nvidia: true
+modules:
+  - nct6775

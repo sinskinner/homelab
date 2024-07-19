@@ -1,0 +1,162 @@
+- name: configure_source_lists_pve
+  ansible.builtin.apt_repository:
+    update_cache: false
+    repo: "{{ item.url }}"
+    state: "{{ item.state }}"
+    filename: "{{ item.file }}"
+  loop:
+    - { file: "pve-enterprise", url: "deb https://enterprise.proxmox.com/debian/pve bookworm pve-enterprise", state: "absent" }
+    - { file: "ceph", url: "deb https://enterprise.proxmox.com/debian/ceph-reef bookworm enterprise", state: "absent" }
+    - { file: "ceph", url: "deb https://enterprise.proxmox.com/debian/ceph-quincy bookworm enterprise", state: "absent" }
+    - { file: "ceph", url: "deb http://download.proxmox.com/debian/ceph-reef bookworm no-subscription", state: "present" }
+    - { file: "pve-community", url: "deb http://download.proxmox.com/debian/ceph-reef bookworm no-subscription", state: "present" }
+    - { file: "pve-community", url: "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription", state: "present" }
+
+- name: configure_source_lists_non_free
+  ansible.builtin.replace:
+    regexp: "(^deb.*contrib$)"
+    path: /etc/apt/sources.list
+    replace: \1 non-free-firmware
+
+- name: upgrade_system
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+    cache_valid_time: 0
+
+- name: install_packages
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: "{{ apt.cache }}"
+    name:
+      - lm-sensors
+      - sudo
+
+- name: install_intel_microcode
+  when: intel
+  ansible.builtin.apt:
+    cache_valid_time: "{{ apt.cache }}"
+    name:
+      - intel-microcode
+
+- name: install_fancontrol
+  when: fancontrol
+  ansible.builtin.apt:
+    cache_valid_time: "{{ apt.cache }}"
+    name:
+      - fancontrol
+      - lm-sensors
+
+- name: create_user_groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+  loop: "{{ security.groups }}"
+
+- name: create_users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    shell: "/bin/bash"
+    groups: "{{ item.groups }}"
+  loop: "{{ security.users }}"
+  no_log: true
+
+- name: add_authorized_keys
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.key }}"
+  loop: "{{ security.users }}"
+
+- name: update_grub_parameters
+  when: iommu
+  ansible.builtin.replace:
+    regexp: "^GRUB_CMDLINE_LINUX_DEFAULT=\"quiet\""
+    path: /etc/default/grub
+    replace: GRUB_CMDLINE_LINUX_DEFAULT="pcie_acs_override=downstream iommu=pt intel_iommu=on"
+  notify: handler_update_grub
+
+- name: modprobe_iommu_modules
+  when: iommu
+  community.general.modprobe:
+    name: "{{ item }}"
+    persistent: present
+  loop:
+    - vfio
+    - vfio_iommu_type1
+    - vfio_pci
+
+- name: modprobe_coretemp_modules
+  when: intel
+  community.general.modprobe:
+    name: coretemp
+    persistent: present
+
+- name: modprobe_extra_modules
+  community.general.modprobe:
+    name: "{{ item }}"
+    persistent: present
+  loop: "{{ modules | default([]) }}"
+
+- name: blacklist_nouveau
+  when: nvidia
+  community.general.kernel_blacklist:
+    name: "{{ item }}"
+  loop:
+    - nouveau
+    - nvidia
+
+- name: copy_backup_network_files
+  tags: netready
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ item }}.{{ now(utc=true, fmt='%Y%m%d-%H%M%S') }}"
+    mode: "644"
+    remote_src: true
+  loop:
+    - /etc/network/interfaces
+    - /etc/hosts
+    - /etc/hostname
+
+- name: template_network_file
+  tags: netready
+  ansible.builtin.template:
+    src: "{{ inventory_hostname_short }}/interfaces.j2"
+    dest: /etc/network/interfaces
+    mode: "644"
+
+- name: replace_etc_hosts
+  tags: netready
+  ansible.builtin.replace:
+    path: /etc/hosts
+    regexp: "^{{ ansible_host }}(.*)$"
+    replace: "{{ networking.hypervisor.hosts[inventory_hostname_short] | ansible.utils.ipaddr('address') }} \\1"
+
+- name: service_restart_networking_async
+  tags: netready
+  ansible.builtin.systemd_service:
+    name: networking
+    state: restarted
+  async: 110
+  poll: 0
+
+- name: fact_change_hostname
+  tags: netready
+  ansible.builtin.set_fact:
+    ansible_host: "{{ networking.hypervisor.hosts[inventory_hostname_short] | ansible.utils.ipaddr('address') }}"
+
+- name: wait_for_reconnection
+  tags: netready
+  ansible.builtin.wait_for_connection:
+    connect_timeout: 10
+    delay: 5
+    sleep: 5
+    timeout: 120
+
+- name: template_sshd_server
+  tags: netready
+  ansible.builtin.template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    mode: "600"
+  notify:
+    - service_restart_sshd
