@@ -1,0 +1,151 @@
+interfaces {
+    bonding bond1 {
+        member {
+            interface eth0
+            interface eth1
+            interface eth2
+        }
+        mii-mon-interval 100
+        mode 802.3ad
+        {% for k, v in networking.items() -%}
+        {% if k != 'wan' -%}
+        {% set address = v.network | ansible.utils.ipaddr('last_usable') -%}
+        {% set prefix = v.network | ansible.utils.ipaddr('prefix') -%}
+        vif {{ v.vid }} {
+            address {{ address }}/{{ prefix }}
+            vrf {{ k }}
+        }
+        {% endif -%}
+        {% endfor -%}
+    }
+    ethernet eth0 {
+        hw-id 0c:c4:7a:58:64:85
+        offload {
+            gro
+            gso
+            sg
+            tso
+        }
+    }
+    ethernet eth1 {
+        hw-id 0c:c4:7a:58:64:86
+        offload {
+            gro
+            gso
+            sg
+            tso
+        }
+    }
+    ethernet eth2 {
+        hw-id 0c:c4:7a:58:64:87
+        offload {
+            gro
+            gso
+            sg
+            tso
+        }
+    }
+    ethernet eth3 {
+        hw-id b4:96:91:98:12:02
+        offload {
+            gro
+            gso
+            sg
+            tso
+        }
+    }
+    loopback lo {
+    }
+    bridge br1 {
+        enable-vlan
+        member {
+            interface eth3 {
+                allowed-vlan 10
+            }
+        }
+        vif 10 {
+            vrf wan
+        }
+    }
+    pppoe pppoe0 {
+        authentication {
+            password {{ pppoe.password }}
+            username {{ ppooe.username }}
+        }
+        source-interface br1.10
+        no-peer-dns 
+        ip {
+            adjust-mss clamp-mss-to-pmtu
+        }
+        vrf wan
+    }
+}
+service {
+    ssh {
+        listen-address {{ networking.management.network | ansible.utils.ipaddr('last_usable') }}
+        vrf management
+    }
+}
+system {
+    config-management {
+        commit-revisions 100
+    }
+    host-name border
+    login {
+        banner {
+            pre-login "Welcome to the ultimate border."
+            post-login ""
+        }
+        user {{ security.admin.login }} {
+            authentication {
+                encrypted-password {{ security.admin.password }}
+                public-keys main {
+                    type {{ (security.admin.key | split(" "))[0]}}
+                    key {{ (security.admin.key | split(" "))[1]}}
+                }
+            }
+        }
+    }
+    syslog {
+        global {
+            facility all {
+                level info
+            }
+            facility local7 {
+                level debug
+            }
+        }
+    }
+}
+vrf {
+    {% for k,v in networking.items() -%}
+    name {{ k }} {
+        table {{ v.vid + 100}}
+        {% if v.access is defined -%}
+        protocols {
+            static {
+            {% for a in v.access -%}
+                route {{ networking[a].network }} {
+                {% set interface = 'pppoe0' if a == 'wan' else 'bond1.' ~ networking[a].vid -%}
+                    interface {{ interface }} {
+                        vrf {{ a }}
+                    }
+                }
+            {% endfor -%}
+            }
+        }
+        {% endif -%}
+    }
+    {% endfor -%}
+}
+
+source {
+    rule 5 {
+        outbound-interface {
+            name pppoe0
+        }
+        translation {
+            address masquerade
+        }
+    }
+}

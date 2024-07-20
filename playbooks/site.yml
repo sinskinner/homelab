@@ -4,3 +4,9 @@
   roles:
     - common
     - proxmox
+
+- name: border_playbook
+  hosts: border
+  gather_facts: false
+  roles:
+    - vyos

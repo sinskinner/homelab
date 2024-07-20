@@ -1,0 +1,5 @@
+- name: template_router_configuration
+  ansible.builtin.template:
+    src: configuration.txt.j2
+    dest: /tmp/configuration.txt
+    mode: "644"
