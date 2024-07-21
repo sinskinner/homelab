@@ -26,20 +26,20 @@
         }
     ],
     "subnet4": [
-        {% for i in ['guest', 'iot', 'trusted'] -%}
-        {% set inetwork = networking.networks[i].network %}
-        {% set st_range = inetwork 
-            | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(1) | ansible.utils.ipaddr('address') -%}
-        {% set en_range = inetwork 
+        {# piping because we dont want a comma in the last item #}
+        {% for v in networking.networks.values() | rejectattr('dhcp', 'undefined') | rejectattr('dhcp', 'false') -%}
+        {% set st_range = v.network 
+            | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(10) | ansible.utils.ipaddr('address') -%}
+        {% set en_range = v.network 
             | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(200) | ansible.utils.ipaddr('address') -%}
 
         {
-            "subnet": "{{ inetwork }}",
+            "subnet": "{{ v.network }}",
             "pools": [ { "pool": "{{ st_range }} - {{ en_range }}" } ],
             "option-data": [
                 {
                     "name": "routers",
-                    "data": "{{ inetwork | ansible.utils.ipaddr('last_usable') | ansible.utils.ipaddr('address') }}"
+                    "data": "{{ v.network | ansible.utils.ipaddr('last_usable') | ansible.utils.ipaddr('address') }}"
                 }
             ]
         }{{", " if not loop.last else "" }}

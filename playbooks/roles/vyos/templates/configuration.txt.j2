@@ -70,7 +70,7 @@ interfaces {
     pppoe pppoe0 {
         authentication {
             password {{ pppoe.password }}
-            username {{ ppooe.username }}
+            username {{ pppoe.username }}
         }
         source-interface br1.10
         no-peer-dns 
@@ -84,6 +84,15 @@ service {
     ssh {
         listen-address {{ networking.networks.management.network | ansible.utils.ipaddr('last_usable') }}
         vrf management
+    }
+    dhcp-relay {
+        {% for k, i in networking.networks.items() -%}
+        {% if (i.dhcp is defined) and (i.dhcp) %}
+        listen-interface bond1.{{ i.vid }}
+        {% endif %}
+        {% endfor %}
+        server {{ networking.networks.services.hosts.dhcp | ansible.utils.ipaddr('address') }}
+        upstream-interface bond1.{{ networking.networks.services.vid }}
     }
 }
 system {
@@ -125,8 +134,8 @@ vrf {
         protocols {
             static {
             {% for a in v.access -%}
-                route {{ networking[a].network }} {
-                {% set interface = 'pppoe0' if a == 'wan' else 'bond1.' ~ networking[a].vid -%}
+                route {{ networking.networks[a].network }} {
+                {% set interface = 'pppoe0' if a == 'wan' else 'bond1.' ~ networking.networks[a].vid -%}
                     interface {{ interface }} {
                         vrf {{ a }}
                     }
@@ -139,13 +148,26 @@ vrf {
     {% endfor -%}
 }
 
-source {
-    rule 5 {
-        outbound-interface {
-            name pppoe0
+nat { 
+        source {
+        rule 5 {
+            outbound-interface {
+                name pppoe0
+            }
+            translation {
+                address masquerade
+            }
         }
-        translation {
-            address masquerade
+    }
+}
+
+{# the dhcp-relay can't use a VRF right now #}
+protocols {
+    static {
+        route {{ networking.networks.services.network }} {
+            interface bond1.{{ networking.networks.services.vid }} {
+                vrf services
+            }
         }
     }
 }

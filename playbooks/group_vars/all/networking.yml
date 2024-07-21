@@ -25,6 +25,7 @@ networking:
         dns: 192.168.177.53/24
         ns: 192.168.168.52/24
     trusted:
+      dhcp: true
       network: 192.168.201.0/24
       vid: 201
       access:
@@ -41,11 +42,13 @@ networking:
         dns: 192.168.168.53/24
         ns: 192.168.168.52/24
     iot:
+      dhcp: true
       network: 192.168.204.0/24
       vid: 204
       access:
         - services
     guest: 
+      dhcp: true
       network: 192.168.249.0/24
       vid: 249
       access:
