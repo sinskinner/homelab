@@ -1,38 +1,79 @@
 networking:
-  hypervisor:
-    network: 192.168.161.0/24
-    vid: 161
-    access:
-      - services
-    hosts:
-      curse: 192.168.161.1/24
-      impel: 192.168.161.2/24
-      sacrilege: 192.168.161.3/24
-      vengeance: 192.168.161.4/24
-  ipmi:
-    network: 192.168.183.0/24
-    vid: 183
-    hosts:
-      palas: 192.168.183.2/24
-  management:
-    network: 192.168.177.0/24
-    vid: 177
-  trusted:
-    network: 192.168.201.0/24
-    vid: 201
-    access:
-      - services
-      - wan
-  services:
-    network: 192.168.168.0/24
-    vid: 168
-    access:
-      - wan
-      - hypervisor
-  wan:
-    vid: 10
-    network: 0.0.0.0/0
-    access:
-      - services
-      - trusted
-
+  # From 192.168.128.1 ~ 192.168.255.254
+  rfc: 192.168.0.0/17
+  networks:
+    hypervisor:
+      network: 192.168.161.0/24
+      vid: 161
+      access:
+        - services
+      hosts:
+        curse: 192.168.161.1/24
+        impel: 192.168.161.2/24
+        sacrilege: 192.168.161.3/24
+        vengeance: 192.168.161.4/24
+    ipmi:
+      network: 192.168.183.0/24
+      vid: 183
+      hosts:
+        palas: 192.168.183.2/24
+    management:
+      network: 192.168.177.0/24
+      vid: 177
+      hosts:
+        dhcp: 192.168.177.67/24
+        dns: 192.168.177.53/24
+        ns: 192.168.168.52/24
+    trusted:
+      network: 192.168.201.0/24
+      vid: 201
+      access:
+        - services
+        - wan
+    services:
+      network: 192.168.168.0/24
+      vid: 168
+      access:
+        - wan
+        - hypervisor
+      hosts:
+        dhcp: 192.168.168.67/24
+        dns: 192.168.168.53/24
+        ns: 192.168.168.52/24
+    iot:
+      network: 192.168.204.0/24
+      vid: 204
+      access:
+        - services
+    guest: 
+      network: 192.168.249.0/24
+      vid: 249
+      access:
+        - services
+        - wan
+    dmz:
+      network: 192.168.251.0/24
+      vid: 251
+      access:
+        - wan
+        - services
+    wan:
+      vid: 10
+      network: 0.0.0.0/0
+      access:
+        - services
+        - trusted
+  dns:
+    recursors:
+      - name: dns10.quad9.net
+        port: 853
+        ip: 9.9.9.10
+      - name: dns10.quad9.net
+        port: 853
+        ip: 149.112.112.10
+      - name: cloudflare-dns.com
+        port: 853
+        ip: 1.1.1.1
+      - name: cloudflare-dns.com
+        port: 853
+        ip: 1.0.0.1

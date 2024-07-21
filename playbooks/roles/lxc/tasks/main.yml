@@ -1,0 +1,55 @@
+- name: proxmox_vm_info
+  delegate_to: localhost
+  community.general.proxmox_vm_info:
+    api_host: "{{ services.controller }}"
+    api_user: "{{ all_secrets.proxmox.api_user }}"
+    api_token_id: "{{ all_secrets.proxmox.api_token_id }}"
+    api_token_secret: "{{ all_secrets.proxmox.api_token_secret }}"
+    node: "{{ vm.node }}"
+    name: "{{ inventory_hostname_short }}"
+  register: vm_info
+
+- name: proxmox_create_machine
+  when: (vm_info.proxmox_vms | length) == 0
+  delegate_to: localhost
+  community.general.proxmox:
+    api_host: "{{ services.controller }}"
+    api_user: "{{ all_secrets.proxmox.api_user }}"
+    api_password: "{{ all_secrets.proxmox.api_password }}"
+    cores: "{{ vm.cores }}"
+    features:
+      - nesting=1
+    hostname: "{{ inventory_hostname_short }}"
+    memory: "{{ vm.memory }}"
+    nameserver: "{{ vm.nameserver }}"
+    ostype: "{{ vm.os }}"
+    password: "{{ lxc.security.password }}"
+    pubkey: "{{ lxc.security.key }}"
+    onboot: true
+    searchdomain: "{{ all_secrets.tld.internal }}"
+    unprivileged: false
+    ostemplate: "local:vztmpl/{{ vm.image }}"
+    disk: "local-lvm:{{ vm.disk }}"
+    node: "{{ vm.node }}"
+    netif:
+      net0: "name=eth0,firewall=0,bridge=vmbr0\
+        ,hwaddr={{ '18:92:2C' | community.general.random_mac(seed=inventory_hostname_short + 'eth0') }}\
+        ,ip={{ networking.networks.management.hosts[inventory_hostname_short] }}\
+        ,tag={{ networking.networks.management.vid }}"
+      net1: "name=eth1,firewall=0,bridge=vmbr0\
+        ,hwaddr={{ '18:92:2C' | community.general.random_mac(seed=inventory_hostname_short + 'eth1') }}\
+        ,ip={{ networking.networks.services.hosts[inventory_hostname_short] }}\
+        ,tag={{ networking.networks.services.vid }}\
+        ,gw={{ networking.networks.services.network | ansible.utils.ipaddr('last_usable') }}"
+    state: present
+  register: vm_created
+
+- name: proxmox_start_machine
+  when: (vm_created.vmid is defined)
+  delegate_to: localhost
+  community.general.proxmox:
+    api_host: "{{ services.controller }}"
+    api_user: "{{ all_secrets.proxmox.api_user }}"
+    api_password: "{{ all_secrets.proxmox.api_password }}"
+    state: started
+    vmid: "{{ vm_created.vmid }}"

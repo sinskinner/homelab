@@ -24,11 +24,11 @@ iface vmbr0 inet manual
 	bridge-vlan-aware yes
 	bridge-vids 2-4094
 
-auto vmbr0.{{ networking.hypervisor.vid }}
-iface vmbr0.{{ networking.hypervisor.vid }} inet static
-	address {{ networking.hypervisor.hosts[inventory_hostname_short] }}
-	gateway {{ networking.hypervisor.hosts[inventory_hostname_short] | ansible.utils.ipaddr('last_usable') }}
+auto vmbr0.{{ networking.networks.hypervisor.vid }}
+iface vmbr0.{{ networking.networks.hypervisor.vid }} inet static
+	address {{ networking.networks.hypervisor.hosts[inventory_hostname_short] }}
+	gateway {{ networking.networks.hypervisor.hosts[inventory_hostname_short] | ansible.utils.ipaddr('last_usable') }}
 	dns-nameservers {{ services.dns }}
-	dns-search {{ tld.internal }}
+	dns-search {{ all_secrets.tld.internal }}
 
 source /etc/network/interfaces.d/*

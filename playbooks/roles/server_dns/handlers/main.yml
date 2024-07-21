@@ -1,0 +1,9 @@
+- name: handler_service_restart_dns
+  ansible.builtin.systemd_service:
+    name: unbound
+    state: restarted
+
+- name: handler_service_restart_adguard
+  ansible.builtin.systemd_service:
+    name: AdGuardHome
+    state: restarted

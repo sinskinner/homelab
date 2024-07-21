@@ -1,0 +1,24 @@
+remote-control:
+  control-enable: yes
+  control-interface: /run/unbound.ctl
+server:
+  auto-trust-anchor-file: "/var/lib/unbound/root.key"
+  statistics-interval: 120
+  statistics-cumulative: yes
+  num-threads: 2
+  interface: lo
+  do-ip6: no
+  private-address: {{ networking.rfc }}
+  private-domain: {{ all_secrets.tld.internal }}
+  tls-cert-bundle: /etc/ssl/certs/ca-certificates.crt
+forward-zone:
+  name: "*"
+  {% for i in networking.dns.recursors -%}
+  forward-addr: {{ i.ip ~ '@' ~ i.port ~ '#' ~ i.name }}
+  {% endfor -%}
+  forward-first: yes
+  forward-tls-upstream: yes
+stub-zone:
+  name: "{{ all_secrets.tld.internal }}"
+  stub-addr: "{{ networking.networks.services.hosts.ns | ansible.utils.ipaddr('address') }}"
+  stub-no-cache: yes

@@ -1,0 +1,52 @@
+- name: install_server_dns
+  ansible.builtin.apt:
+    cache_valid_time: "{{ apt.cache }}"
+    name:
+      - unbound
+
+- name: template_server_dns_configuration
+  ansible.builtin.template:
+    src: unbound.conf.j2
+    dest: /etc/unbound/unbound.conf
+    mode: "644"
+  notify: handler_service_restart_dns
+
+- name: download_adguard
+  delegate_to: localhost
+  ansible.builtin.get_url:
+    url: https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.107.52/AdGuardHome_linux_amd64.tar.gz
+    checksum: sha256:a2645ecf23ccadbb0d97b324aef9bc67d126b8e394428ae5a23c2f1b73c5d140
+    dest: /tmp/
+    mode: "644"
+  register: download_adguard_result
+
+- name: unarchive_adguard
+  ansible.builtin.unarchive:
+    src: "{{ download_adguard_result.dest }}"
+    remote_src: false
+    dest: /opt/
+    mode: "644"
+
+- name: chmod_adguard
+  ansible.builtin.file:
+    mode: "744"
+    path: /opt/AdGuardHome/AdGuardHome
+    state: file
+
+- name: template_adguard_configuration
+  ansible.builtin.template:
+    src: adguard.yml.j2
+    dest: /opt/AdGuardHome/adguard.yml
+    mode: "600"
+  notify: handler_service_restart_adguard
+
+- name: service_facts
+  ansible.builtin.service_facts:
+  register: service_facts_adguard_result
+
+- name: command_adguard_installation
+  when: service_facts_adguard_result.ansible_facts.services['AdGuardHome.service'] is undefined
+  ansible.builtin.command:
+    cmd: /opt/AdGuardHome/AdGuardHome -s install -c /opt/AdGuardHome/adguard.yml
+  register: command_adguard_installation_result
+  changed_when: command_adguard_installation_result.rc == 0

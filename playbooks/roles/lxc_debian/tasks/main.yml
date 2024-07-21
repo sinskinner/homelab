@@ -1,0 +1,31 @@
+- name: upgrade_system
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+    cache_valid_time: 0
+
+- name: install_packages
+  ansible.builtin.apt:
+    cache_valid_time: "{{ apt.cache }}"
+    name:
+      - sudo
+
+- name: create_user_groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+  loop: "{{ lxc.groups }}"
+
+- name: create_users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    shell: /bin/bash
+    groups: "{{ item.groups }}"
+  loop: "{{ lxc.users }}"
+  no_log: true
+
+- name: add_authorized_keys
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.key }}"
+  loop: "{{ lxc.users }}"

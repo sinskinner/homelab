@@ -7,7 +7,7 @@ interfaces {
         }
         mii-mon-interval 100
         mode 802.3ad
-        {% for k, v in networking.items() -%}
+        {% for k, v in networking.networks.items() -%}
         {% if k != 'wan' -%}
         {% set address = v.network | ansible.utils.ipaddr('last_usable') -%}
         {% set prefix = v.network | ansible.utils.ipaddr('prefix') -%}
@@ -82,7 +82,7 @@ interfaces {
 }
 service {
     ssh {
-        listen-address {{ networking.management.network | ansible.utils.ipaddr('last_usable') }}
+        listen-address {{ networking.networks.management.network | ansible.utils.ipaddr('last_usable') }}
         vrf management
     }
 }
@@ -118,7 +118,7 @@ system {
     }
 }
 vrf {
-    {% for k,v in networking.items() -%}
+    {% for k,v in networking.networks.items() -%}
     name {{ k }} {
         table {{ v.vid + 100}}
         {% if v.access is defined -%}

@@ -129,7 +129,7 @@
   ansible.builtin.replace:
     path: /etc/hosts
     regexp: "^{{ ansible_host }}(.*)$"
-    replace: "{{ networking.hypervisor.hosts[inventory_hostname_short] | ansible.utils.ipaddr('address') }} \\1"
+    replace: "{{ networking.networks.hypervisor.hosts[inventory_hostname_short] | ansible.utils.ipaddr('address') }} \\1"
 
 - name: service_restart_networking_async
   tags: netready
@@ -139,10 +139,10 @@
   async: 110
   poll: 0
 
-- name: fact_change_hostname
+- name: set_fact_change_hostname
   tags: netready
   ansible.builtin.set_fact:
-    ansible_host: "{{ networking.hypervisor.hosts[inventory_hostname_short] | ansible.utils.ipaddr('address') }}"
+    ansible_host: "{{ networking.networks.hypervisor.hosts[inventory_hostname_short] | ansible.utils.ipaddr('address') }}"
 
 - name: wait_for_reconnection
   tags: netready
@@ -159,4 +159,4 @@
     dest: /etc/ssh/sshd_config
     mode: "600"
   notify:
-    - service_restart_sshd
+    - handler_service_restart_sshd

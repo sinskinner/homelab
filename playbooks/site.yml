@@ -10,3 +10,23 @@
   gather_facts: false
   roles:
     - vyos
+
+- name: lxc_playbook
+  hosts: lxc
+  gather_facts: false
+  roles:
+    - lxc
+
+- name: dhcp_playbook
+  hosts: dhcp
+  gather_facts: false
+  roles:
+    - lxc_debian
+    - server_dhcp
+
+- name: dns_playbook
+  hosts: dns
+  gather_facts: false
+  roles:
+    - lxc_debian
+    - server_dns

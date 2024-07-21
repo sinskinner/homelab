@@ -1,0 +1,63 @@
+{
+"Dhcp4": {
+    "interfaces-config": {
+        "interfaces": [ "eth1" ],
+        "dhcp-socket-type": "udp"
+    },
+    "control-socket": {
+        "socket-type": "unix",
+        "socket-name": "/run/kea/kea4-ctrl-socket"
+    },
+    "lease-database": {
+        "type": "memfile",
+        "lfc-interval": 3600
+    },
+    "calculate-tee-times": true,
+    "valid-lifetime": 3600,
+    "option-data": [
+        {
+            "name": "domain-name-servers",
+            "data": "{{ networking.networks.services.hosts.dns | ansible.utils.ipaddr('address') }}",
+            "always-send": true
+        },
+        {
+            "name": "domain-search",
+            "data": "{{ all_secrets.tld.internal }}"
+        }
+    ],
+    "subnet4": [
+        {% for i in ['guest', 'iot', 'trusted'] -%}
+        {% set inetwork = networking.networks[i].network %}
+        {% set st_range = inetwork 
+            | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(1) | ansible.utils.ipaddr('address') -%}
+        {% set en_range = inetwork 
+            | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(200) | ansible.utils.ipaddr('address') -%}
+
+        {
+            "subnet": "{{ inetwork }}",
+            "pools": [ { "pool": "{{ st_range }} - {{ en_range }}" } ],
+            "option-data": [
+                {
+                    "name": "routers",
+                    "data": "{{ inetwork | ansible.utils.ipaddr('last_usable') | ansible.utils.ipaddr('address') }}"
+                }
+            ]
+        }{{", " if not loop.last else "" }}
+        {% endfor -%}
+    ],
+    "loggers": [
+    {
+        "name": "kea-dhcp4",
+        "output_options": [
+            {
+                "output": "syslog",
+                "pattern": "%-5p %m\n",
+                "flush": false
+            }
+        ],
+        "severity": "INFO",
+        "debuglevel": 0
+    }
+  ]
+}
+}
