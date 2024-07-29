@@ -1,0 +1,8 @@
+- name: template_sshd_server
+  tags: netready
+  ansible.builtin.template:
+    src: "{{inventory_hostname_short }}/sshd_config.j2"
+    dest: /etc/ssh/sshd_config
+    mode: "600"
+  notify:
+    - handler_service_restart_sshd

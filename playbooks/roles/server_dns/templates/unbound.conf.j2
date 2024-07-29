@@ -11,8 +11,11 @@ server:
   private-address: {{ networking.rfc }}
   private-domain: {{ all_secrets.tld.internal }}
   tls-cert-bundle: /etc/ssl/certs/ca-certificates.crt
+  {#- for now, we are going to disable the DNSSec until I figure it out how to insert TAs in Unbound -#}
+  domain-insecure: {{ all_secrets.tld.internal }}
+  local-zone: "168.192.in-addr.arpa." transparent
 forward-zone:
-  name: "*"
+  name: "."
   {% for i in networking.dns.recursors -%}
   forward-addr: {{ i.ip ~ '@' ~ i.port ~ '#' ~ i.name }}
   {% endfor -%}
@@ -20,5 +23,9 @@ forward-zone:
   forward-tls-upstream: yes
 stub-zone:
   name: "{{ all_secrets.tld.internal }}"
+  stub-addr: "{{ networking.networks.services.hosts.ns | ansible.utils.ipaddr('address') }}"
+  stub-no-cache: yes
+stub-zone:
+  name: "{{ networking.reverse }}"
   stub-addr: "{{ networking.networks.services.hosts.ns | ansible.utils.ipaddr('address') }}"
   stub-no-cache: yes

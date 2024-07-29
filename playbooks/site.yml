@@ -30,3 +30,39 @@
   roles:
     - lxc_debian
     - server_dns
+
+- name: postgresql_playbook
+  hosts: postgresql
+  gather_facts: false
+  roles:
+    - lxc_debian
+    - server_postgresql
+
+- name: ns_playbook
+  hosts: ns
+  gather_facts: false
+  roles:
+    - lxc_debian
+    - server_ns
+
+- name: ldap_playbook
+  hosts: idm
+  gather_facts: false
+  roles:
+    - lxc_debian
+    - server_lldap
+    - server_kerberos
+
+- name: certificates_playbook
+  hosts: certificates
+  gather_facts: false
+  roles:
+    - lxc_debian
+    - server_certbot
+
+- name: nfs_playbook
+  hosts: nfs
+  gather_facts: false
+  roles:
+    - server_nfs
+    - sshd

@@ -1,0 +1,4 @@
+- name: handler_service_restart_pdns
+  ansible.builtin.systemd_service:
+    name: pdns
+    state: restarted

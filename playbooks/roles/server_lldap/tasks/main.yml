@@ -1,0 +1,21 @@
+- name: download_lldap
+  delegate_to: localhost
+  ansible.builtin.get_url:
+    url: https://download.opensuse.org/repositories/home:/Masgalor:/LLDAP/Debian_12/amd64/lldap_0.5.0-1+3.2_amd64.deb
+    dest: /tmp/
+    mode: "644"
+    checksum: sha1:4461cb2195514be3b3302fc2bf13badc23f7dce7
+  register: download_lldap_result
+
+- name: copy_lldap
+  ansible.builtin.copy:
+    src: "{{ download_lldap_result.dest }}"
+    dest: /tmp/
+    checksum: 4461cb2195514be3b3302fc2bf13badc23f7dce7
+    mode: "644"
+  register: copy_lldap_result
+
+- name: install_server_lldap
+  ansible.builtin.apt:
+    deb: "{{ copy_lldap_result.dest }}"
+    update_cache: false

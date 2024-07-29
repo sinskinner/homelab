@@ -15,14 +15,20 @@
     "calculate-tee-times": true,
     "valid-lifetime": 3600,
     "option-data": [
+        {%- set dns_ip =  networking.networks.services.hosts.dns | ansible.utils.ipaddr('address') -%}
         {
             "name": "domain-name-servers",
-            "data": "{{ networking.networks.services.hosts.dns | ansible.utils.ipaddr('address') }}",
+            "data": "{{ dns_ip }}",
             "always-send": true
         },
         {
             "name": "domain-search",
             "data": "{{ all_secrets.tld.internal }}"
+        },
+        {
+            "name": "v4-dnr",
+            "data": "1, dns.{{ all_secrets.tld.internal }}., {{ dns_ip }}, alpn=dot\\,doq",
+            "always-send": true
         }
     ],
     "subnet4": [
@@ -34,6 +40,7 @@
             | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(200) | ansible.utils.ipaddr('address') -%}
 
         {
+            "id": {{ loop.index }},
             "subnet": "{{ v.network }}",
             "pools": [ { "pool": "{{ st_range }} - {{ en_range }}" } ],
             "option-data": [

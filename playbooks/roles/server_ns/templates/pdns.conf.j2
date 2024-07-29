@@ -1,0 +1,10 @@
+allow-dnsupdate-from=127.0.0.0/8,{{ networking.networks.services.hosts.dhcp }}
+local-address={{ networking.networks.services.hosts.ns | ansible.utils.ipaddr('address')}}
+primary=yes
+launch=gpgsql
+gpgsql-host={{ networking.networks.services.hosts.postgresql | ansible.utils.ipaddr('address') }}
+gpgsql-port=5432
+gpgsql-dbname=powerdns
+gpgsql-user={{ pdns.user }}
+gpgsql-password={{ pdns.password }}
+gpgsql-dnssec=yes

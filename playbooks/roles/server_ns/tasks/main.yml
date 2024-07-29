@@ -1,0 +1,77 @@
+- name: install_server_ns
+  ansible.builtin.apt:
+    cache_valid_time: "{{ apt.cache }}"
+    name:
+      - pdns-server
+      - pdns-backend-pgsql
+      - pdns-tools
+
+- name: copy_pdns_schema
+  delegate_to: postgresql
+  ansible.builtin.copy:
+    src: pdns_schema.sql
+    dest: /tmp/pdns_schema.sql
+    mode: "666"
+
+- name: prepare_ns_database
+  delegate_to: postgresql
+  become: true
+  become_method: ansible.builtin.su
+  become_user: "{{ all_secrets.postgresql.user }}"
+  block:
+    - name: postgresql_ns_db_create_database
+      community.general.postgresql_db:
+        name: powerdns
+      register: postgresql_db_create_database_result
+
+    - name: postgresql_ns_script_create_tables # noqa: no-handler
+      when: postgresql_db_create_database_result.changed
+      community.postgresql.postgresql_script:
+        db: powerdns
+        path: /tmp/pdns_schema.sql
+
+    - name: postgresql_ns_create_user
+      community.postgresql.postgresql_user:
+        db: powerdns
+        name: "{{ pdns.user }}"
+        password: "{{ pdns.password }}"
+
+    - name: postgresql_ns_hba_grant_network_access
+      community.postgresql.postgresql_pg_hba:
+        dest: /etc/postgresql/15/main/pg_hba.conf
+        contype: host
+        users: "{{ pdns.user }}"
+        source: "{{ networking.networks.services.hosts.ns }}"
+        databases: powerdns
+        method: scram-sha-256
+
+    - name: postegresql_ns_privs_db
+      community.postgresql.postgresql_privs:
+        db: powerdns
+        type: database
+        roles: "{{ pdns.user }}"
+        privs: CONNECT
+
+    # No idea why this is not working, throwing an exception in Ansible
+    # - name: postegresql_ns_privs_tables
+    #   community.postgresql.postgresql_privs:
+    #     objs: ALL_IN_SCHEMA
+    #     db: powerdns
+    #     type: table
+    #     roles: "{{ pdns.user }}"
+    #     privs: SELECT,INSERT,UPDATE,DELETE
+    #     grant_option: false
+
+- name: template_server_ns
+  ansible.builtin.template:
+    src: pdns.conf.j2
+    dest: /etc/powerdns/pdns.conf
+    mode: "600"
+    owner: pdns
+    group: pdns
+  notify: handler_service_restart_pdns
+
+# From now, configure the records using the pdnsutil commands, like
+# pdnsutil create-zone example.com
+# pdnsutil secure-zone example.com
+# remember to add the trustanchor to the dns server.

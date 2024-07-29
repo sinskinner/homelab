@@ -13,14 +13,13 @@ GatewayPorts no
 PermitTunnel no
 PrintMotd no
 X11Forwarding no
-AllowGroups admin root
+AllowGroups admin
 AuthenticationMethods publickey
 UsePAM yes
 ChallengeResponseAuthentication no
 MaxAuthTries 3
 PermitEmptyPasswords no
-# Precisamos do RootLogin para montar o Cluster posteriormente.
-PermitRootLogin yes
+PermitRootLogin no
 PubkeyAuthentication yes
 Ciphers aes256-gcm@openssh.com,aes128-gcm@openssh.com
 HostKeyAlgorithms rsa-sha2-512,rsa-sha2-256,ssh-ed25519

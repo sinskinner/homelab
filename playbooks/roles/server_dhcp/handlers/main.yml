@@ -1,4 +1,4 @@
 - name: handler_service_restart_dhcp
   ansible.builtin.systemd_service:
-    name: kea-dhcp4-server
+    name: isc-kea-dhcp4-server
     state: restarted

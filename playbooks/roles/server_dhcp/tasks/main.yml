@@ -1,8 +1,52 @@
+- name: install_gpg
+  ansible.builtin.apt:
+    name:
+      - gpg
+    cache_valid_time: "{{ apt.cache }}"
+
+- name: get_url_cloudsmith_key
+  delegate_to: localhost
+  ansible.builtin.get_url:
+    url: https://dl.cloudsmith.io/public/isc/kea-2-6/gpg.63D408891D8B8D01.key
+    dest: /tmp/
+    mode: "644"
+  register: get_url_cloudsmith_key_result
+
+- name: copy_cloudsmith_key
+  ansible.builtin.copy:
+    src: "{{ get_url_cloudsmith_key_result.dest }}"
+    dest: /tmp/
+    mode: "644"
+  register: copy_cloudsmith_key_result
+
+- name: install_kea_repository
+  vars:
+    keyring_path: /usr/share/keyrings/isc-kea-2-6-archive-keyring.gpg
+  block:
+    - name: verify_imported_cloudsmith_key
+      ansible.builtin.stat:
+        path: "{{ keyring_path }}"
+      register: verify_imported_cloudsmith_key_result
+
+    - name: command_gpg_dearmor_cloudsmith_key
+      when: verify_imported_cloudsmith_key_result.stat.exists is false
+      ansible.builtin.command:
+        cmd: "gpg -o {{ keyring_path }} --dearmor {{ copy_cloudsmith_key_result.dest }}"
+      register: command_gpg_dearmor_cloudsmith_key_result
+      changed_when: command_gpg_dearmor_cloudsmith_key_result.rc == 0
+
+    - name: apt_repository_configure_kea_source_list
+      ansible.builtin.apt_repository:
+        repo: deb [signed-by={{ keyring_path }}] https://dl.cloudsmith.io/public/isc/kea-2-6/deb/debian bookworm main
+        update_cache: true
+        filename: kea_cloudsmith
+
 - name: install_server_dhcp
   ansible.builtin.apt:
     cache_valid_time: "{{ apt.cache }}"
     name:
-      - kea-dhcp4-server
+      - isc-kea-dhcp4>=2.6
+      - isc-kea-dhcp-ddns>=2.6
 
 - name: template_server_dhcp
   ansible.builtin.template:

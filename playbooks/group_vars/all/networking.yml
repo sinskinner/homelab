@@ -1,6 +1,7 @@
 networking:
   # From 192.168.128.1 ~ 192.168.255.254
   rfc: 192.168.0.0/17
+  reverse: 168.192.in-addr.arpa
   networks:
     hypervisor:
       network: 192.168.161.0/24
@@ -23,7 +24,11 @@ networking:
       hosts:
         dhcp: 192.168.177.67/24
         dns: 192.168.177.53/24
-        ns: 192.168.168.52/24
+        ns: 192.168.177.52/24
+        postgresql: 192.168.177.37/24
+        idm: 192.168.177.36/24
+        certificates: 192.168.177.43/24
+        nfs: 192.168.177.137/24
     trusted:
       dhcp: true
       network: 192.168.201.0/24
@@ -37,10 +42,17 @@ networking:
       access:
         - wan
         - hypervisor
+        - trusted
+        - iot
+        - guest
       hosts:
         dhcp: 192.168.168.67/24
         dns: 192.168.168.53/24
         ns: 192.168.168.52/24
+        postgresql: 192.168.168.37/24
+        idm: 192.168.168.36/24
+        certificates: 192.168.168.43/24
+        nfs: 192.168.168.137/24
     iot:
       dhcp: true
       network: 192.168.204.0/24

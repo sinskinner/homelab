@@ -1,4 +1,4 @@
-- name: configure_source_lists_pve
+- name: apt_repository_configure_pve_source_list
   ansible.builtin.apt_repository:
     update_cache: false
     repo: "{{ item.url }}"

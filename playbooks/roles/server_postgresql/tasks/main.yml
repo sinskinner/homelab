@@ -1,0 +1,20 @@
+- name: install_server_postgresql
+  ansible.builtin.apt:
+    cache_valid_time: "{{ apt.cache }}"
+    name:
+      - postgresql
+      - python3-psycopg
+
+- name: replace_postgressql_enable_scramsha256
+  ansible.builtin.replace:
+    path: /etc/postgresql/15/main/postgresql.conf
+    replace: \1
+    regexp: "^#(password_encryption = scram-sha-256)"
+  notify: handler_service_restart_postgresql
+
+- name: replace_postgressql_listen_address
+  ansible.builtin.replace:
+    path: /etc/postgresql/15/main/postgresql.conf
+    replace: "listen_addresses = '{{ networking.networks.services.hosts.postgresql | ansible.utils.ipaddr('address') }}'"
+    regexp: "^#listen_addresses = 'localhost'.*$"
+  notify: handler_service_restart_postgresql

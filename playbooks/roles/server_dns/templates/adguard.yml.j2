@@ -56,11 +56,10 @@ filters:
       id: 3
 dhcp:
     enabled: false
-schema_version: 28
+tls:
+    enabled: true
+    server_name: dns.{{ all_secrets.tld.internal }}
+    certificate_path: /etc/letsencrypt/live/dns.{{ all_secrets.tld.internal }}/fullchain.pem
+    private_key_path: /etc/letsencrypt/live/dns.{{ all_secrets.tld.internal }}/privkey.pem
 
-#To be edited when the certbot server is up and running
-#cert tls:
-#cert   enabled: true
-#cert   server_name: dns.{{ all_secrets.tld.internal }}
-#cert   certificate_chain: /var/local/certificates/chain.crt
-#cert   private_key: /var/local/certificates/priv.key
+schema_version: 28

@@ -1,0 +1,7 @@
+- name: install_server_kerberos
+  ansible.builtin.apt:
+    cache_valid_time: "{{ apt.cache }}"
+    name:
+      - krb5-kdc
+      - krb5-admin-server
+      - krb5-kdc-ldap

@@ -1,0 +1,21 @@
+security:
+  groups:
+    - admin
+  users:
+    - name: nieckarz
+      password: "$6$lsX1f5yDJTwiS60v$N0WPdiAE9cy5liezE0D7xMfLqKlUmPDAdPrbFd1JcjCcRz/n0LtpIpsOZSEXCqubzIsacSJNRxMEQMsQVA\
+        e83/"
+      key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDT0gDeHXPuyRS4jIPmOOebHm7VOAJGlzEA1oAfm4PoNxO8dJwKadY/nUqqUKEhVwbDwBC\
+        TAAlaaLw86Chg061wk5HbMidZFZ4gon+naz5Bvb4LxKFdjNqPgcYKC8gsNNDopTIPwLO7WRDRKIrOzWLWtaMH0HLLsZvKnMbC4//ssDGW9q4rvf\
+        L0XLQkHsrQbQyPw5P+s+UWvXVY7I3ShvOcmMx/AC4g8Re4LUYODhdiZeAQzQET9tie9s9585Db3HA6gACrQAisIWhi5qPnu8e51kJCpwZTj8f1M\
+        eDRG2MNfT1lm65oTjhrKXOlmwL8dkwXXBjf1ktcdXpFh63lb7O7FumCmfqB9ZdaRpGkYjyO0BTCC/CURHS6/5UIwkvmfxydvKiiNFlly7rceqQQ\
+        YC9L1Q1Qlp4idLZWO17dmsmkvhMwN9Mv+kc9vBeLWefXZFv45rN3XfEJljYmut3CMQdUJkxtvzaKDxuYktUsmf+A6Yg44bXFWduXSbhN7elpvP0\
+        ="
+      groups:
+        - sudo
+        - admin
+ansible_user: nieckarz
+ansible_password: Dorina0382
+ansible_become: true
+ansible_become_method: ansible.builtin.su
+ansible_become_password: Dorina0382

@@ -1,0 +1,57 @@
+- name: upgrade_system
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+    cache_valid_time: 0
+
+- name: configure_source_lists_extras
+  ansible.builtin.apt_repository:
+    update_cache: false
+    repo: "{{ item.url }}"
+    state: "{{ item.state }}"
+    filename: "{{ item.file }}"
+  loop:
+    - url: deb http://deb.debian.org/debian bookworm-backports main contrib non-free
+      state: present
+      file: backports
+
+- name: upgrade_system
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+    cache_valid_time: 0
+
+- name: install_packages
+  ansible.builtin.apt:
+    cache_valid_time: "{{ apt.cache }}"
+    name:
+      - sudo
+      - qemu-guest-agent
+      - linux-headers-amd64
+      - nfs-kernel-server
+
+- name: install_zfs_packages
+  ansible.builtin.apt:
+    default_release: stable-backports
+    name:
+      - zfsutils-linux
+      - zfs-dkms
+
+- name: create_user_groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+  loop: "{{ security.groups }}"
+
+- name: create_users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    shell: "/bin/bash"
+    groups: "{{ item.groups }}"
+  loop: "{{ security.users }}"
+
+- name: add_authorized_keys
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.key }}"
+  loop: "{{ security.users }}"

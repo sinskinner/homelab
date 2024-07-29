@@ -50,3 +50,42 @@
     cmd: /opt/AdGuardHome/AdGuardHome -s install -c /opt/AdGuardHome/adguard.yml
   register: command_adguard_installation_result
   changed_when: command_adguard_installation_result.rc == 0
+
+- name: install_certbot
+  ansible.builtin.apt:
+    cache_valid_time: "{{ apt.cache }}"
+    name:
+      - certbot
+      - python3-certbot-dns-cloudflare
+      - python3-certbot-dns-route53
+      - python3-certbot-dns-digitalocean
+
+- name: configure_certbot_credentials
+  ansible.builtin.blockinfile:
+    path: /etc/certbot.conf
+    mode: 600
+    create: true
+    block: |
+      {{ all_secrets.certbot.challenge.api.key }}={{ all_secrets.certbot.challenge.api.value }}
+
+- name: verify_enabled_certificate
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/dns.{{ all_secrets.tld.internal }}"
+  register: verify_enabled_certificate_result
+
+- name: command_run_certbot
+  when: verify_enabled_certificate.stat.exists is false
+  ansible.builtin.command:
+    cmd: "certbot certonly {{ all_secrets.certbot.parameters }}\
+      -d dns.{{ all_secrets.tld.internal }}"
+  register: command_run_certbot_result
+  changed_when: command_run_certbot_result.rc == 0
+
+- name: configure_certificate_renewal_hook
+  ansible.builtin.blockinfile:
+    path: /etc/letsencrypt/renewal-hooks/post/adguard-restart.sh
+    mode: "774"
+    create: true
+    block: |
+      #!/bin/bash
+      systemctl restart AdGuardHome
