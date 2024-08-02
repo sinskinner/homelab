@@ -1,0 +1,7 @@
+group {
+    address-group DNS_SERVERS {
+        {% for i in networking.dns.recursors -%}
+        address {{ i.ip }}
+        {% endfor -%}
+    }
+}

@@ -1,0 +1,9 @@
+rule 50 {
+    description "DNS Service"
+    action accept
+    protocol tcp_udp
+    destination {
+        port 53,853
+        address {{ networking.networks.services.hosts.dns | ansible.utils.ipaddr('address') }}
+    }
+}

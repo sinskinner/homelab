@@ -1,0 +1,10 @@
+rule 60 {
+    action accept
+    protocol tcp_udp
+    destination {
+        port 53,853
+        group {
+            address-group DNS_SERVERS
+        }
+    }
+}

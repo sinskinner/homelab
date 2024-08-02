@@ -3,6 +3,7 @@ networking:
   rfc: 192.168.0.0/17
   reverse: 168.192.in-addr.arpa
   networks:
+    self:
     hypervisor:
       network: 192.168.161.0/24
       vid: 161

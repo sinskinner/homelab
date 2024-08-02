@@ -1,0 +1,7 @@
+rule 6 {
+    action accept
+    protocol icmp
+    icmp {
+        type-name echo-request
+    }
+}

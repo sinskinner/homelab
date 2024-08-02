@@ -1,0 +1,8 @@
+{% include "snippets/6-icmp-external.j2" %}
+rule 55 {
+    destination {
+        port http,https
+    }
+    protocol tcp
+    action accept
+}

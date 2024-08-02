@@ -1,0 +1,12 @@
+{% include "snippets/5-icmp-internal.j2" %}
+rule 36 {
+    action accept
+    protocol udp
+    destination {
+        port 67
+        address {{ networking.networks.services.hosts.dhcp | ansible.utils.ipaddr('address') }}
+    }
+    source {
+        port 67
+    }
+}

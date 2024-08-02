@@ -8,7 +8,7 @@ interfaces {
         mii-mon-interval 100
         mode 802.3ad
         {% for k, v in networking.networks.items() -%}
-        {% if k != 'wan' -%}
+        {% if k != 'wan' and k != 'self' -%}
         {% set address = v.network | ansible.utils.ipaddr('last_usable') -%}
         {% set prefix = v.network | ansible.utils.ipaddr('prefix') -%}
         vif {{ v.vid }} {
@@ -87,10 +87,10 @@ service {
     }
     dhcp-relay {
         {% for k, i in networking.networks.items() -%}
-        {% if (i.dhcp is defined) and (i.dhcp) %}
+        {% if (i.dhcp is defined) and (i.dhcp) -%}
         listen-interface bond1.{{ i.vid }}
-        {% endif %}
-        {% endfor %}
+        {% endif -%}
+        {% endfor -%}
         server {{ networking.networks.services.hosts.dhcp | ansible.utils.ipaddr('address') }}
         upstream-interface bond1.{{ networking.networks.services.vid }}
     }
@@ -128,8 +128,9 @@ system {
 }
 vrf {
     {% for k,v in networking.networks.items() -%}
+    {% if v.vid is defined -%}
     name {{ k }} {
-        table {{ v.vid + 100}}
+        table {{ v.vid + 100 }}
         {% if v.access is defined -%}
         protocols {
             static {
@@ -145,10 +146,11 @@ vrf {
         }
         {% endif -%}
     }
+    {% endif -%}
     {% endfor -%}
 }
 
-nat { 
+nat {
         source {
         rule 5 {
             outbound-interface {
@@ -170,4 +172,63 @@ protocols {
             }
         }
     }
+}
+
+firewall {
+    global-options {
+        state-policy {
+            established {
+                action accept
+            }
+            related {
+                action accept
+            }
+            invalid {
+                action drop
+                log
+            }
+        }
+    }
+    {%- include "snippets/0-network-groups.j2" -%}
+    ipv4 {
+        {% for a in networking.networks | dict2items -%}
+            {% for b in networking.networks | dict2items -%}
+                {% if a.key != b.key -%}
+                    name {{ b.key ~ '-' ~ a.key }} {
+                        {% set fwaction = 'drop' if b.key == 'wan' else 'reject' -%}
+                        default-action {{ fwaction}}
+                        default-log
+                        {% include b.key ~ '-' ~ a.key ~ '.j2' ignore missing -%}
+                    }
+                {% endif -%}
+            {% endfor -%}
+        {% endfor -%}
+    }
+    
+    {%- for a in networking.networks | dict2items -%}
+    zone {{ a.key }} {
+        default-action drop
+        default-log
+        {% if a.key == 'self' %}
+        local-zone
+        {% else %}
+        {% if a.key == 'wan' %}
+        interface pppoe0
+        {% else %}
+        interface bond1.{{ a.value.vid }}
+        interface {{ a.key }}
+        {% endif %}
+        {% endif %}
+        {% for b in networking.networks | dict2items -%}
+        {% if a.key != b.key -%}
+        from {{ b.key }} {
+            firewall {
+                name {{ b.key ~ '-' ~ a.key }}
+            }
+        }
+        {% endif -%}
+        {% endfor -%}
+    }
+    {% endfor -%}
+    
 }
