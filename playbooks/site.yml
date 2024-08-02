@@ -30,6 +30,7 @@
   roles:
     - lxc_debian
     - server_dns
+    - server_caddy
 
 - name: postgresql_playbook
   hosts: postgresql

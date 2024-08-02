@@ -13,7 +13,7 @@ dns:
     local_ptr_upstreams:
         - {{ networking.networks.services.hosts.dns | ansible.utils.ipaddr('address') }}
     allowed_clients: {{ networking.networks | dict2items | map(attribute='value') 
-        | rejectattr('network', 'eq', '0.0.0.0/0') | map(attribute='network') | list }}
+        | rejectattr('network', 'undefined') | rejectattr('network', 'eq', '0.0.0.0/0') | map(attribute='network') | list }}
     cache_size: 0
     enable_dnssec: true
     aaaa_disabled: true
@@ -61,5 +61,6 @@ tls:
     server_name: dns.{{ all_secrets.tld.internal }}
     certificate_path: /etc/letsencrypt/live/dns.{{ all_secrets.tld.internal }}/fullchain.pem
     private_key_path: /etc/letsencrypt/live/dns.{{ all_secrets.tld.internal }}/privkey.pem
+    port_https: 0
 
 schema_version: 28

@@ -8,3 +8,25 @@ rule 60 {
         }
     }
 }
+
+rule 55 {
+    action accept
+    protocol tcp
+    destination {
+        port 80,443
+        group {
+            address-group DEBIAN_SERVERS
+        }
+    }
+}
+
+rule 70 {
+    action accept
+    protocol tcp
+    destination {
+        port 443
+    }
+    source {
+        address {{ networking.networks.services.hosts.certificates | ansible.utils.ipaddr('address') }}
+    }
+}

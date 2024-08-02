@@ -4,4 +4,11 @@ group {
         address {{ i.ip }}
         {% endfor -%}
     }
+    address-group DEBIAN_SERVERS {
+        address 151.101.250.132
+        address 151.101.130.132
+        address 151.101.66.132
+        address 151.101.2.132
+        address 151.101.194.132
+    }
 }

@@ -96,6 +96,7 @@ service {
     }
 }
 system {
+    name-server {{ networking.networks.services.hosts.dns | ansible.utils.ipaddr('address') }}
     config-management {
         commit-revisions 100
     }

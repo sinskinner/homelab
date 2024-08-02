@@ -1,0 +1,26 @@
+- name: install_caddy
+  ansible.builtin.apt:
+    name:
+      - caddy
+
+- name: configure_caddy
+  ansible.builtin.template:
+    src: "{{ inventory_hostname_short }}/Caddyfile.j2"
+    dest: /etc/caddy/Caddyfile
+    mode: "644"
+  notify: handler_service_restart_caddy
+
+- name: stat_verify_letencrypt_installed
+  ansible.builtin.stat:
+    path: /etc/letsencrypt
+  register: stat_verify_letencrypt_installed_result
+
+- name: configure_certificate_renewal_hook
+  when: stat_verify_letencrypt_installed_result.stat.exists
+  ansible.builtin.blockinfile:
+    path: /etc/letsencrypt/renewal-hooks/post/caddy_restart.sh
+    mode: "774"
+    create: true
+    block: |
+      #!/bin/bash
+      systemctl restart caddy

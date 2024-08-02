@@ -1,8 +1,18 @@
 {% include "snippets/6-icmp-external.j2" %}
-rule 55 {
-    destination {
-        port http,https
-    }
-    protocol tcp
+{% include "snippets/55-http.j2" %}
+
+rule 35 {
     action accept
+    protocol tcp
+    destination {
+        port 22
+    }
+}
+
+rule 36 {
+    action accept
+    protocol tcp
+    destination {
+        port 465,587,993,995
+    }
 }
