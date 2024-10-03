@@ -1,0 +1,23 @@
+proxy_acls:
+  allow:
+    dstdomain:
+      - .debian.org
+      - .oisd.nl
+      - .blocklistproject.github.io
+      - .api.cloudflare.com
+      - .api.letsencrypt.org
+      - .lencr.org
+      - .dl.cloudsmith.io
+      - download.proxmox.com
+      - releases.turnkeylinux.org
+      - .fedoraproject.org
+      - fedora.c3sl.ufpr.br
+      - .almalinux.org
+      - cdn.azul.com
+      - openhab.jfrog.io
+      - .smarthomej.org
+      - community.openhab.org
+      - .maven.org
+      - static.tp-link.com
+      - .mongodb.org
+      - pgp.mongodb.com

@@ -1,0 +1,17 @@
+bootstrap:
+  hosts:
+    virt-01:
+      ansible_host: 192.168.15.101
+    virt-02:
+      ansible_host: 192.168.15.102
+    virt-03:
+      ansible_host: 192.168.15.103
+    virt-04:
+      ansible_host: 192.168.15.104
+
+proxmox:
+  hosts:
+    virt-01:
+    virt-02:
+    virt-03:
+    virt-04:

@@ -1,0 +1,3 @@
+misc_hosts_hostname: "{{ inventory_hostname_short }}"
+misc_hosts_domain_internal: "{{ resolv.domains.internal }}"
+misc_hosts_ip_address: "{{ addressing[inventory_hostname_short].address }}"

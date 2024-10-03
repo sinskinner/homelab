@@ -1,0 +1,20 @@
+{# macro to help creating a interface string #}
+{%- macro create_if_string(interface) -%}
+
+{% set gw_data = "" %}
+
+{%- if interface.gw is defined and interface.gw == true -%}
+  {% set gw_data=",gw=" + interface.network | ansible.utils.ipaddr('last_usable') %}
+{%- endif -%}
+
+name={{ interface.name }},firewall=0,bridge=vmbr0,
+hwaddr={{ '18:92:2C' | community.general.random_mac(seed=inventory_hostname_short + interface.name) }},
+ip={{ interface.address }}/{{ interface.network | ansible.utils.ipaddr('prefix')}},tag={{ interface.vlan }}{{ gw_data }}
+
+{%- endmacro -%}
+
+{%- set if_dict = {} -%}
+{% for interface in lxc_config_network_config %}
+  {%- set _ = if_dict.update({interface.name: create_if_string(interface) | replace("\n", "")}) -%}
+{% endfor %}
+{{ if_dict | tojson }}

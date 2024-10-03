@@ -1,0 +1,73 @@
+{# I really to refactor this entire configuration to a dict #}
+{
+    "Dhcp4": {
+        "interfaces-config": {
+            "interfaces": {{ server_dhcp_listen | ansible.builtin.to_json }},
+            "dhcp-socket-type": "udp"
+        },
+        "control-socket": {
+            "socket-type": "unix",
+            "socket-name": "/run/kea/kea4-ctrl-socket"
+        },
+        "lease-database": {
+            "type": "memfile",
+            "lfc-interval": 3600
+        },
+        "calculate-tee-times": true,
+        "valid-lifetime": 3600,
+        "option-data": [
+            {
+                "name": "domain-name-servers",
+                "data": "{{ server_dhcp_dns | join(',') }}",
+                "always-send": true
+            },
+            {
+                "name": "domain-search",
+                "data": "{{ server_dhcp_domain_search }}"
+            },
+            {
+                "name": "time-servers",
+                "data": "{{ server_dhcp_ntp | join(',') }}",
+                "always-send": true
+            }
+        ],
+        {% set subnets = [] -%}
+        {% for v in server_dhcp_networks  -%}
+        {% set network = server_dhcp_network_data[v].network -%}
+        {% set st_range = (network | ansible.utils.ipaddr(2) | ansible.utils.ipaddr('address')) -%}
+        {% set en_range = (network | ansible.utils.ipaddr(-3) | ansible.utils.ipaddr('address')) -%}
+        {% set reservations = server_dhcp_reservation[v] | default([]) -%}
+
+        {% set data = {
+            "id": loop.index,
+            "subnet": network,
+            "pools": [{
+                "pool": st_range ~ '-' ~ en_range
+            }],
+            "reservations": reservations,
+            "option-data": [
+                {
+                    "name": "routers",
+                    "data": network | ansible.utils.ipaddr('last_usable')
+                }
+            ]
+        } -%}
+        {% set _ = subnets.append(data) -%}
+        {% endfor -%}
+        "subnet4": {{ subnets | ansible.builtin.to_json(indent=8) }},
+        "loggers": [
+            {
+                "name": "kea-dhcp4",
+                "output_options": [
+                    {
+                        "output": "syslog",
+                        "pattern": "%-5p %m\n",
+                        "flush": false
+                    }
+                ],
+                "severity": "INFO",
+                "debuglevel": 0
+            }
+        ]
+    }
+}

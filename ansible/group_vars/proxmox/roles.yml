@@ -1,0 +1,2 @@
+client_ntp_sysclock: true
+server_proxmox_ssh_key: "{{ misc_ssh.public_key }}"

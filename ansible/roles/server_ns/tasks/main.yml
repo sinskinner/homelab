@@ -1,0 +1,107 @@
+- name: Install de PowerDNS
+  ansible.builtin.apt:
+    name:
+      - "pdns-server"
+      - "pdns-backend-sqlite3"
+      - "sqlite3"
+
+- name: Set the PowerDNS SQLite3 DB Path
+  ansible.builtin.set_fact:
+    pdns_db_path: /var/lib/powerdns/db.sqlite3
+
+- name: Configure PowerDNS
+  ansible.builtin.template:
+    src: pdns.conf.j2
+    dest: /etc/powerdns/pdns.conf
+    mode: "640"
+    group: pdns
+  notify:
+    - Restart PowerDNS Service
+
+- name: Verify if the PowerDNS DB Exists
+  ansible.builtin.stat:
+    path: "{{ pdns_db_path }}"
+  register: stat_verify_database_exists_result
+
+- name: Block - Bootstrap the SQLite3 DB
+  when: stat_verify_database_exists_result.stat.exists is false
+  block:
+    - name: Copy the PowerDNS SQL file
+      ansible.builtin.copy:
+        src: pdns.sql
+        dest: /tmp/pdns.sql
+        mode: "644"
+
+    - name: Create the database
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          cat /tmp/pdns.sql | sqlite3 {{ pdns_db_path }}
+        executable: /bin/bash
+      register: shell_pdns_create_database_result
+      changed_when: shell_pdns_create_database_result == 0
+
+    - name: Change the Database permissions
+      ansible.builtin.file:
+        mode: "660"
+        path: "{{ pdns_db_path }}"
+        state: file
+        group: pdns
+      notify:
+        - Restart PowerDNS Service
+- name: Create/Update the NS Records
+  ansible.builtin.debug:
+    msg: "Creating the Records"
+
+- name: Create the NS Records
+  when: server_ns_create_zone
+  block:
+    - name: Check if the zone exists
+      ansible.builtin.command: "pdnsutil list-zone {{ item.value }}"
+      register: ns_check_zone
+      failed_when: false
+      changed_when: false
+      loop: "{{ server_ns_domains | dict2items }}"
+
+    - name: Create the zone when the result is 1
+      ansible.builtin.command: "pdnsutil create-zone {{ item.item.value }}"
+      register: ns_create_zone
+      changed_when: ns_create_zone.rc == 0
+      when: item.rc == 1
+      loop: "{{ ns_check_zone.results }}"
+
+    - name: Recheck the zones
+      ansible.builtin.command: "pdnsutil list-zone {{ item.value }}"
+      register: ns_check_zone
+      changed_when: false
+      loop: "{{ server_ns_domains | dict2items }}"
+
+    - name: Clear zones and start from scratch
+      ansible.builtin.command: "pdnsutil clear-zone {{ item.item.value }}"
+      register: ns_clear_zone
+      when: item.rc == 0
+      changed_when: ns_clear_zone.rc == 0
+      loop: "{{ ns_check_zone.results }}"
+
+    - name: Template the zone file
+      ansible.builtin.template:
+        src: "zone.{{ item.key }}.j2"
+        dest: "/tmp/{{ item.key }}-zone.conf"
+        mode: "644"
+      loop: "{{ server_ns_domains | dict2items }}"
+      register: ns_template_zone
+
+    - name: Load the zones
+      ansible.builtin.command: "pdnsutil load-zone {{ item.value }} /tmp/{{ item.key }}-zone.conf"
+      register: ns_load_zone
+      changed_when: ns_load_zone == 0
+      loop: "{{ server_ns_domains | dict2items }}"
+
+    - name: Rectify all zones
+      ansible.builtin.command: "pdnsutil rectify-all-zones"
+      changed_when: false
+
+    - name: Check the zones
+      loop: "{{ server_ns_domains | dict2items }}"
+      ansible.builtin.command: "pdnsutil check-zone {{ item.value }}"
+      changed_when: false

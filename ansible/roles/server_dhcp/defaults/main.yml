@@ -1,0 +1,9 @@
+server_dhcp_listen:
+  - "net0"
+server_dhcp_dns: "{{ services_vars.dns | map(attribute='address') | map('ansible.utils.ipaddr', 'address') }}"
+server_dhcp_domain_search: "{{ resolv.domains.internal }}"
+server_dhcp_ntp: "{{ services_vars.ntp | map(attribute='address') | map('ansible.utils.ipaddr', 'address') }}"
+server_dhcp_network_data: "{{ networking.subnets }}"
+server_dhcp_networks:
+  - devices
+server_dhcp_reservations: {}

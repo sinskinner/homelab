@@ -1,0 +1,60 @@
+http:
+  address: 127.0.0.1:8080
+theme: dark
+http_proxy: {{ server_dns_proxy_address }}
+dns:
+  bind_hosts:
+    - {{ server_dns_adguard_listen }}
+  upstream_dns:
+    - 127.0.0.1
+  private_networks: {{ server_dns_allowed_access }}
+  use_private_ptr_resolvers: true
+  local_ptr_upstreams: {{ server_dns_local_upstream }}
+  allowed_clients: {{ server_dns_allowed_access }}
+  cache_size: 0
+  enable_dnssec: true
+  aaaa_disabled: true
+  resolve_clients: true
+  serve_http3: true
+  serve_plain_dns: true
+  ratelimit: 0
+  hostsfile_enabled: false
+filtering:
+  protection_enabled: true
+  filtering_enabled: true
+  blocking_mode: nxdomain
+  safebrowsing_enabled: false
+  blocked_response_ttl: 120
+  filters_update_interval: 24
+  safe_search:
+    enabled: false
+  blocked_services:
+    ids:
+      - icloud_private_relay
+querylog:
+  enabled: true
+  file_enabled: false
+  interval: 1h
+statistics:
+  enabled: true
+  interval: 4383h
+filters:
+  - name: oisd
+    enabled: true
+    url: https://big.oisd.nl
+    id: 1
+  - name: Ads - Blocklist Project
+    enabled: true
+    url: https://blocklistproject.github.io/Lists/adguard/ads-ags.txt
+    id: 2
+  - name: Ads - Tracking
+    enabled: true
+    url: https://blocklistproject.github.io/Lists/adguard/tracking-ags.txt
+    id: 3
+dhcp:
+  enabled: false
+tls:
+  enabled: false
+user_rules:
+  - '@@||powerdns.com^'
+schema_version: 28

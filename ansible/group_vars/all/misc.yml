@@ -1,0 +1,15 @@
+misc_ssh:
+  allowed_groups: "{{ vault_misc_ssh.allowed_groups }}"
+  public_key: "{{ vault_misc_ssh.public_key }}"
+misc_proxy:
+  access: "http://{{ addressing['proxy-01'].address | ansible.utils.ipaddr('address') }}:3128"
+misc_ntp:
+  servers:
+    - name: a.st1.ntp.br
+      address: 200.160.7.186
+    - name: b.st1.ntp.br
+      address: 201.49.148.135
+    - name: c.st1.ntp.br
+      address: 200.186.125.195
+    - name: d.st1.ntp.br
+      address: 200.20.186.76

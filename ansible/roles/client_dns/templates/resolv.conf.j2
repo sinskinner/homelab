@@ -1,0 +1,4 @@
+search {{ client_dns_search }}
+{% for i in client_dns_resolver %}
+nameserver {{ i }}
+{% endfor %}

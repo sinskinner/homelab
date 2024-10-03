@@ -1,0 +1,6 @@
+server_vyos_networks: "{{ networking.subnets }}"
+server_vyos_config: "{{ local }}"
+server_vyos_auth_user: "{{ vault_vyos_auth.user }}"
+server_vyos_auth_pass: "{{ vault_vyos_auth.password }}"
+server_vyos_auth_ssh: "{{ vault_vyos_auth.public_key }}"
+server_vyos_hosts: "{{ addressing }}"

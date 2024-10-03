@@ -1,0 +1,52 @@
+addressing:
+  virt-01:
+    address: 172.30.192.1/27
+    group: virt
+  virt-02:
+    address: 172.30.192.2/27
+    group: virt
+  virt-03:
+    address: 172.30.192.3/27
+    group: virt
+  virt-04:
+    address: 172.30.192.4/27
+    group: virt
+  dns-01:
+    address: 172.30.193.1/24
+    group: dns
+  dns-01-m:
+    address: 172.30.194.1/24
+    group: management
+  ntp-01:
+    address: 172.30.193.2/24
+    group: ntp
+  ntp-01-m:
+    address: 172.30.194.2/24
+    group: management
+  dhcp-01:
+    address: 172.30.193.3/24
+    group: dhcp
+  dhcp-01-m:
+    address: 172.30.194.3/24
+    group: management
+  proxy-01:
+    address: 172.30.193.4/24
+    group: proxy
+  proxy-01-m:
+    address: 172.30.194.4/24
+    group: management
+  ns-01:
+    address: 172.30.193.5/24
+    group: ns
+  ns-01-m:
+    address: 172.30.194.5/24
+    group: management
+  border-01-m:
+    address: 172.30.194.254/24
+    group: border
+  switch-01:
+    address: 172.30.192.60/27
+    group: switch
+  ap01:
+    address: 172.30.192.61/27
+    group: access-point

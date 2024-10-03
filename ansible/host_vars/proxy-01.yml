@@ -1,0 +1,7 @@
+lxc_debian_role_proxy: false
+lxc_config_nameserver: 9.9.9.9
+lxc_config_disk: "local-lvm:4"
+lxc_config_memory: 1024
+server_proxy_listen_address:
+  - address: "{{ addressing[inventory_hostname_short].address | ansible.utils.ipaddr('address') }}"
+    port: 3128

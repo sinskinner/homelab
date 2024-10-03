@@ -1,0 +1,5 @@
+- name: Configure the Switch
+  hosts: routeros
+  gather_facts: false
+  roles:
+    - server_routeros

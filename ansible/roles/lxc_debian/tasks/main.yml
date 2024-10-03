@@ -1,0 +1,20 @@
+- name: Adds the proxy configuration
+  when: lxc_debian_role_proxy
+  ansible.builtin.blockinfile:
+    path: /etc/apt/apt.conf.d/99-proxy.conf
+    create: true
+    mode: 600
+    block: |
+      Acquire {
+        HTTP::proxy "{{ lxc_debian_role_proxy_address }}";
+        HTTPS::proxy "{{ lxc_debian_role_proxy_address }}";
+      }
+- name: Upgrade the System
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+
+- name: Install common packages
+  ansible.builtin.apt:
+    name:
+      - sudo

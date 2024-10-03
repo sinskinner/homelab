@@ -1,0 +1,42 @@
+rule 5 {
+  action accept
+  protocol icmp
+  description "Permitir Echo Requests"
+  icmp {
+    type 8
+    code 0
+  }
+}
+
+rule 10 {
+    action accept
+    protocol udp
+    description "Permitir acesso ao NTP Interno"
+    destination {
+        port 123
+        address {{ server_vyos_hosts['ntp-01'].address | ansible.utils.ipaddr('address') }}
+    }
+}
+
+rule 15 {
+    action accept
+    protocol udp
+    description "Permitir DNS Interno"
+    destination {
+        port 53
+        address {{ server_vyos_hosts['dns-01'].address | ansible.utils.ipaddr('address') }}
+    }
+}
+
+rule 20 {
+    action accept
+    protocol udp
+    description "Permitir DHCP"
+    destination {
+        port 67
+        address {{ server_vyos_hosts['dhcp-01'].address | ansible.utils.ipaddr('address') }}
+    }
+    source {
+        port 68
+    }
+}

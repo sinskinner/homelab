@@ -1,0 +1,20 @@
+{% import '_includes/macros.j2' as m with context %}
+{# section: vrf #}
+vrf {
+    {% for network in server_vyos_networks | dict2items | sort(attribute='key') %}
+    name {{ network.key | upper }} {
+        protocols {
+            {% filter indent(width=12) %}
+            {{ m.create_static_route(network.key) }}
+            {% endfilter %}
+        }
+        table {{ network.value.vid + 100 }}
+    }
+    {% endfor %}
+}
+{# endsection: vrf #}
+
+{# default route for dhcp relay #}
+protocols {
+    {{ m.create_static_route('self') }}
+}

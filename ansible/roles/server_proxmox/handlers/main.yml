@@ -1,0 +1,4 @@
+- name: Handler - Update Grub
+  ansible.builtin.command: update-grub
+  register: r_update_grub
+  changed_when: r_update_grub.rc == 0

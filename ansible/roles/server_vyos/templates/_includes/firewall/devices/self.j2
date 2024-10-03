@@ -1,0 +1,9 @@
+rule 5 {
+  action accept
+  protocol icmp
+  description "Permitir Echo Requests"
+  icmp {
+    type 8
+    code 0
+  }
+}

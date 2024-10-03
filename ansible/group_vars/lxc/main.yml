@@ -1,0 +1,6 @@
+ansible_password: &lxc001 "{{ vault_lxc.password }}"
+ansible_user: "{{ vault_lxc.username }}"
+lxc:
+  security:
+    password: *lxc001
+    key: "{{ vault_lxc.key }}"

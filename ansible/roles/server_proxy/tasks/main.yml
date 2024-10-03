@@ -1,0 +1,13 @@
+- name: Install the Squid Proxy
+  ansible.builtin.apt:
+    name:
+      - squid-openssl
+
+- name: Configure the Squid Proxy
+  ansible.builtin.template:
+    src: squid.conf.j2
+    dest: /etc/squid/squid.conf
+    mode: "0644"
+  notify:
+    - Handler - Restart Squid
+    - Handler - Reload Squid

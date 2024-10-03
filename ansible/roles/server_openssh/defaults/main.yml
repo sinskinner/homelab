@@ -1,0 +1,4 @@
+server_openssh_allow_root: "prohibit-password"
+server_openssh_listen_address: "{{ ansible_host }}"
+server_openssh_allowed_groups: "{{ misc_ssh.allowed_groups }}"
+ansible_python_interpreter: /usr/bin/python3

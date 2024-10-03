@@ -1,0 +1,33 @@
+remote-control:
+  control-enable: yes
+  control-interface: /run/unbound.ctl
+server:
+  interface: 127.0.0.1
+  auto-trust-anchor-file: "/var/lib/unbound/root.key"
+  statistics-interval: 120
+  statistics-cumulative: yes
+  num-threads: 2
+  interface: lo
+  do-ip6: no
+  private-address: {{ server_dns_private_network }}
+  {% for i in server_dns_authoritative_domains -%}
+  private-domain: "{{ i }}"
+  domain-insecure: "{{ i }}"
+  {% endfor -%}
+  tls-cert-bundle: /etc/ssl/certs/ca-certificates.crt
+  local-zone: "{{ server_dns_authoritative_reverse }}" transparent
+forward-zone:
+  name: "."
+  {% for i in server_dns_recursors -%}
+  forward-addr: {{ i.address ~ '@' ~ i.port ~ '#' ~ i.name }}
+  {% endfor -%}
+  forward-first: yes
+  forward-tls-upstream: yes
+{% for i in server_dns_authoritative_domains -%}
+stub-zone:
+  name: "{{ i }}"
+  {% for ns in server_dns_local_upstream %}
+  stub-addr: "{{ ns }}"
+  {% endfor %}
+  stub-no-cache: yes
+{% endfor %}

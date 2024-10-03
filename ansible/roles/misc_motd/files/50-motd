@@ -1,0 +1,10 @@
+#!/bin/bash
+echo "************************************************************"
+echo "Hello $(whoami), welcome to $(hostname)."
+echo "************************************************************"
+echo "Date: $(date)"
+echo "Uptime: $(uptime -p)"
+echo "Memory Usage: $(free -h | awk '/Mem/ {print $3 " / " $2}')"
+echo "Disk Usage: $(df -h / | awk '/\// {print $3 " / " $2}')"
+echo "Load Average: $(cat /proc/loadavg | awk '{print $1, $2, $3}')"
+echo "************************************************************"

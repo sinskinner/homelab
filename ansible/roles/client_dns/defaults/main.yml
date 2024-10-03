@@ -1,0 +1,2 @@
+client_dns_search: "{{ resolv.domains.internal }}"
+client_dns_resolver: "{{ services_vars.dns | map(attribute='address') | map('ansible.utils.ipaddr', 'address') }}"

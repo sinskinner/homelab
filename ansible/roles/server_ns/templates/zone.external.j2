@@ -1,0 +1,5 @@
+{% include "_inc/zone-header.j2" %}
+
+{% for k, v in server_ns_records_external.items() %}
+{{ k }} IN {{ v.type }} {{ v.target }}
+{% endfor %}

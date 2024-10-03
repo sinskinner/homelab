@@ -1,0 +1,2 @@
+server_routeros_config: "{{ local.config }}"
+server_routeros_config_users: []

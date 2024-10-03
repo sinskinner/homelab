@@ -1,0 +1,79 @@
+{% import '_includes/macros.j2' as m with context %}
+
+firewall {
+    global-options {
+        state-policy {
+            related {
+                action accept
+            }
+            established {
+                action accept
+            }
+            invalid {
+                action drop
+                log
+            }
+        }
+    }
+    group {
+        {% for group in server_vyos_config.address_groups | dict2items %}
+        address-group {{ group.key | upper }} {
+            {% for ip in group.value %}
+            address {{ ip }}
+            {% endfor %}
+        }
+        {% endfor %}
+    }
+        {# section: ipv6_fw #}
+    ipv6 {
+        {% for table in ['forward', 'input', 'output'] %}
+        {{ table }} {
+            filter {
+                default-action drop
+            }
+        }
+        {% endfor %}
+    }
+    {# endsection: ipv6_fw #}
+    {% set _ = server_vyos_networks.update({'self': {}}) %}
+    {% set derived_zones = server_vyos_networks | dict2items | map(attribute='key') | list | ansible.builtin.permutations(2) | map('join', '-') %}
+    ipv4 {
+        {% for zone in derived_zones %}
+        name {{ zone | upper }} {
+            default-log
+            default-action {{ 'drop' if zone.startswith('wan') else 'reject' }}
+            {% set from = zone.split("-")[0] %}
+            {% set to = zone.split("-")[1] %}
+            {% include "_includes/firewall/" ~ (from | lower) ~ "/" ~ (to | lower) ~ ".j2" ignore missing %}
+        }
+        {% endfor %}
+    }
+    {% for zone in server_vyos_networks | dict2items %}
+    zone {{ zone.key | upper }} {
+        default-action drop
+        default-log
+        {% if zone.key == 'self' %}
+        local-zone
+        {% else %}
+        interface {{ zone.key | upper }} {# VRF Attachment #}
+
+        {% if zone.key == 'wan' %}
+        {% for interface in server_vyos_config.interfaces.pppoe %}
+        interface {{ interface.name }}
+        {% endfor %}
+        {% else %}
+        interface {{ server_vyos_config.extra.internal ~ '.' ~ zone.value.vid }}
+        {% endif %}
+        {% endif %}
+        {% for from in server_vyos_networks %}
+        {% if zone.key != from %}
+        from {{ from | upper }} {
+            firewall {
+                name {{ (from ~ '-' ~ zone.key) | upper }}
+            }
+        }
+        {% endif %}
+        {% endfor %}
+    }
+    {% endfor %}
+}

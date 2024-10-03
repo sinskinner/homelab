@@ -1,0 +1,120 @@
+- name: Configure PVE Repositories
+  ansible.builtin.apt_repository:
+    update_cache: false
+    repo: "{{ item.url }}"
+    state: "{{ item.state }}"
+    filename: "{{ item.file }}"
+  loop:
+    - { file: "pve-enterprise", url: "deb https://enterprise.proxmox.com/debian/pve bookworm pve-enterprise", state: "absent" }
+    - { file: "ceph", url: "deb https://enterprise.proxmox.com/debian/ceph-reef bookworm enterprise", state: "absent" }
+    - { file: "ceph", url: "deb https://enterprise.proxmox.com/debian/ceph-quincy bookworm enterprise", state: "absent" }
+    - { file: "ceph", url: "deb http://download.proxmox.com/debian/ceph-reef bookworm no-subscription", state: "present" }
+    - { file: "pve-community", url: "deb http://download.proxmox.com/debian/ceph-reef bookworm no-subscription", state: "present" }
+    - { file: "pve-community", url: "deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription", state: "present" }
+
+- name: Adds the non-free-firmware repositories
+  ansible.builtin.replace:
+    regexp: "(^deb.*contrib$)"
+    path: /etc/apt/sources.list
+    replace: \1 non-free-firmware
+
+- name: Updates the system
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+    cache_valid_time: 60
+
+- name: Install common packages
+  ansible.builtin.apt:
+    update_cache: true
+    name:
+      - lm-sensors
+      - sudo
+
+- name: Adds the SSH to the root user
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ server_proxmox_ssh_key }}"
+
+- name: Install the Intel Microcode when Intel
+  when: server_proxmox_intel
+  ansible.builtin.apt:
+    name:
+      - intel-microcode
+
+- name: Replace GRUB parameters when IOMMU is activated
+  when: server_proxmox_iommu
+  ansible.builtin.replace:
+    regexp: "^GRUB_CMDLINE_LINUX_DEFAULT=\"quiet\"$"
+    path: /etc/default/grub
+    replace: GRUB_CMDLINE_LINUX_DEFAULT="quiet pcie_acs_override=downstream iommu=pt intel_iommu=on"
+  notify: Handler - Update Grub
+
+- name: Load IOMMU related kernel modules
+  when: server_proxmox_iommu
+  community.general.modprobe:
+    name: "{{ item }}"
+    persistent: present
+  loop:
+    - vfio
+    - vfio_iommu_type1
+    - vfio_pci
+
+- name: Load 'coretemp' kernel module
+  when: server_proxmox_intel
+  community.general.modprobe:
+    name: coretemp
+    persistent: present
+
+- name: Blacklist the 'nvidia' and 'nouveau' kernel modules
+  when: server_proxmox_nvidia
+  community.general.kernel_blacklist:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - nouveau
+    - nvidia
+
+- name: Backup network related files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ item }}.{{ now(utc=true, fmt='%Y%m%d%H%M%S') }}.bak"
+    mode: "644"
+    remote_src: true
+  loop:
+    - /etc/network/interfaces
+    - /etc/hosts
+    - /etc/hostname
+
+- name: Configure the network interfaces
+  ansible.builtin.template:
+    src: "{{ inventory_hostname_short }}/interfaces.j2"
+    dest: /etc/network/interfaces
+    mode: "644"
+
+- name: Change the Hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname_short }}"
+    use: debian
+
+- name: Restart Networking
+  # We're doing it here, as we need the networking before flushing the other handlers.
+  ansible.builtin.systemd_service:
+    name: networking
+    state: restarted
+  changed_when: true
+  async: 15
+  poll: 0
+
+- name: Change the ansible_host fact
+  ansible.builtin.set_fact:
+    ansible_host: "{{ server_proxmox_address | ansible.utils.ipaddr('address') }}"
+  tags:
+    - skip_check
+- name: Wait for Proxmox reconnection
+  ansible.builtin.wait_for_connection:
+    timeout: 240
+    delay: 5
+
+- name: Flush Proxmox role handlers
+  ansible.builtin.meta: flush_handlers

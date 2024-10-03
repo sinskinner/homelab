@@ -1,0 +1,23 @@
+auto lo
+iface lo inet loopback
+iface eno1 inet manual
+iface eno2 inet manual
+
+auto bond0
+iface bond0 inet manual
+    bond-slaves eno1 eno2
+    bond-miimon 100
+    bond-mode 802.3ad
+    bond-xmit-hash-policy layer2+3
+
+auto vmbr0
+iface vmbr0 inet manual
+    bridge-ports bond0
+    bridge-stp off
+    bridge-fd 0
+    bridge-vlan-aware yes
+    bridge-vids 2-4094
+
+{% include 'vmbr.j2' %}
+
+source /etc/network/interfaces.d/*

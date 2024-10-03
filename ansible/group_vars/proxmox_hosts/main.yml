@@ -1,0 +1,7 @@
+proxmox_hosts:
+  cluster:
+    controller: virt-01
+    controller_user: "{{ vault_proxmox_controller.cluster_user }}"
+    controller_token_id: "{{ vault_proxmox_controller.cluster_token_id }}"
+    controller_token_secret: "{{ vault_proxmox_controller.cluster_token_secret }}"
+    controller_password: "{{ vault_proxmox_controller.cluster_password }}"

@@ -1,0 +1,6 @@
+dependencies:
+  - role: misc_deb_repository
+    vars:
+      misc_deb_repository_id: kea
+      misc_deb_repository_gpg_key: https://dl.cloudsmith.io/public/isc/kea-2-6/gpg.63D408891D8B8D01.key
+      misc_deb_repository_repo: https://dl.cloudsmith.io/public/isc/kea-2-6/deb/debian bookworm main

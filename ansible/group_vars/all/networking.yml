@@ -1,0 +1,34 @@
+networking:
+  supernet: 172.30.192.0/18
+  subnets:
+    virt:
+      network: 172.30.192.0/27
+      vid: 150
+      description: Hypervisors
+    srv:
+      network: 172.30.193.0/24
+      vid: 151
+      description: Services and Servers
+    mgt:
+      network: 172.30.194.0/24
+      vid: 152
+      description: Management
+    devices:
+      network: 172.30.195.0/24
+      vid: 156
+      description: Devices
+    ipmi:
+      network: 172.30.192.32/27
+      vid: 157
+      description: IPMI
+    iot:
+      network: 172.30.196.0/24
+      vid: 158
+      description: IOT
+    wan:
+      network: 0.0.0.0/0
+      vid: 10
+      description: WAN
+
+  dhcp:
+    - devices

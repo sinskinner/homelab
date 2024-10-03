@@ -1,0 +1,39 @@
+Port 22
+ListenAddress {{ server_openssh_listen_address }}
+AddressFamily inet
+AcceptEnv LANG LC_*
+AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
+AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
+AcceptEnv XMODIFIERS
+AllowAgentForwarding no
+AllowTcpForwarding no
+AllowStreamLocalForwarding no
+DisableForwarding yes
+GatewayPorts no
+PermitTunnel no
+PrintMotd yes
+X11Forwarding no
+AllowGroups {{ server_openssh_allowed_groups | join (" ") }}
+AuthenticationMethods publickey
+UsePAM yes
+ChallengeResponseAuthentication no
+MaxAuthTries 3
+PermitEmptyPasswords no
+PermitRootLogin {{ server_openssh_allow_root }}
+PubkeyAuthentication yes
+Ciphers aes256-gcm@openssh.com,aes128-gcm@openssh.com
+HostKeyAlgorithms rsa-sha2-512,rsa-sha2-256,ssh-ed25519
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+KexAlgorithms sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group18-sha512,diffie-hellman-group16-sha512
+DebianBanner no
+ClientAliveCountMax 2
+ClientAliveInterval 300
+Compression no
+IgnoreRhosts yes
+MaxSessions 2
+Protocol 2
+Subsystem sftp internal-sftp
+TCPKeepAlive no
+UseDNS no

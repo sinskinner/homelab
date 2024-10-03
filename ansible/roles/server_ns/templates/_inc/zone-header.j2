@@ -1,0 +1,11 @@
+{% set origin = item.value %}
+$ORIGIN {{ origin }}.
+$TTL 3600
+{{ origin }}.  IN  SOA   ns.{{ server_ns_domains.internal }}. hostmaster.{{ server_ns_domains.internal }}. (
+    {{ now(utc=true,fmt='%Y%m%d%HH%MM') }}
+    720
+    360
+    86400
+    60
+)
+{{ origin }}.  IN  NS ns.{{ server_ns_domains.internal }}.

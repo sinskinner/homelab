@@ -1,0 +1,29 @@
+- name: Install Chrony
+  ansible.builtin.apt:
+    name:
+      - chrony
+
+- name: Disable sysclock capabilities
+  when: not client_ntp_sysclock
+  ansible.builtin.blockinfile:
+    mode: "644"
+    path: /etc/systemd/system/chrony.service.d/override.conf
+    create: true
+    block: |
+      [Unit]
+      ConditionCapability=
+
+- name: Disable managing the Systemclock
+  when: not client_ntp_sysclock
+  ansible.builtin.replace:
+    regexp: "^DAEMON_OPTS=\".*\"$"
+    replace: DAEMON_OPTS="-F 1 -x"
+    path: /etc/default/chrony
+
+- name: Configure the Chrony Client
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+    mode: "644"
+  notify:
+    - Handler - Restart the Chrony service

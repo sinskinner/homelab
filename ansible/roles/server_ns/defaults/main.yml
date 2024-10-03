@@ -1,0 +1,8 @@
+server_ns_create_zone: false
+server_ns_dhcp_servers: "{{ services_vars.dhcp | map(attribute='address') \
+  | map('ansible.utils.ipaddr', 'address') }}"
+server_ns_listen_address: "{{ addressing[inventory_hostname_short].address | ansible.utils.ipaddr('address') }}"
+server_ns_domains: "{{ resolv.domains }}"
+server_ns_hosts: "{{ addressing }}"
+server_ns_records_external: "{{ resolv.records.external }}"
+server_ns_records_internal: "{{ resolv.records.internal }}"

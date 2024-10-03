@@ -1,0 +1,37 @@
+- name: Install the GPG Package
+  ansible.builtin.apt:
+    name:
+      - gpg
+
+- name: Download the GPG Key
+  environment:
+    http_proxy: "{{ misc_deb_repository_proxy }}"
+    https_proxy: "{{ misc_deb_repository_proxy }}"
+  ansible.builtin.get_url:
+    url: "{{ misc_deb_repository_gpg_key }}"
+    dest: /tmp/
+    mode: "644"
+    use_proxy: true
+  register: misc_deb_repository_gpg_key_result
+
+- name: Install the Repository
+  vars:
+    keyring_path: "/usr/share/keyrings/{{ misc_deb_repository_id }}.gpg"
+  block:
+    - name: Verify if the Key is present
+      ansible.builtin.stat:
+        path: "{{ keyring_path }}"
+      register: misc_deb_repository_key_present
+
+    - name: Dearmor the GPG Key
+      when: misc_deb_repository_key_present.stat.exists is false
+      ansible.builtin.command:
+        cmd: "gpg -o {{ keyring_path }} --dearmor {{ misc_deb_repository_gpg_key_result.dest }}"
+      register: command_gpg_dearmor_cloudsmith_key_result
+      changed_when: command_gpg_dearmor_cloudsmith_key_result.rc == 0
+
+    - name: Enable the Repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by={{ keyring_path }}] {{ misc_deb_repository_repo }}"
+        filename: "repo_{{ misc_deb_repository_id }}"
+        state: present

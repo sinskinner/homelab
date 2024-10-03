@@ -1,0 +1,24 @@
+acl localnet src {{ server_proxy_allow_networks }}
+
+acl ssl_ports port 443
+acl safe_ports port 80 443
+acl connect method CONNECT
+{% for k,v in server_proxy_acls.allow.items() %}
+{% for d in v %}
+acl allow_{{ k }} {{ k }} {{ d }}
+{% endfor %}
+{% endfor %}
+http_access deny !safe_ports
+http_access deny connect !ssl_ports
+{% for k,v in server_proxy_acls.allow.items() %}
+http_access allow localnet allow_{{ k }}
+{% endfor %}
+http_access deny all
+
+{% set cache = lxc_config_disk | replace("local-lvm:", "") | int %}
+cache_dir aufs /var/spool/squid/ {{ "%d" | format(cache * 0.5 * 1000) }} 16 256
+refresh_pattern . 0	80%	4320
+
+{% for i in server_proxy_listen_address %}
+http_port {{ i.address ~ ':' ~ i.port }}
+{% endfor %}

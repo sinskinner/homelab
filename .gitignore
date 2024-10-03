@@ -1,0 +1,6 @@
+.venv
+vault.yml
+vault.pkl
+.vscode
+.idea
+homelab.iml

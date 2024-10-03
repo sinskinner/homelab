@@ -1,0 +1,5 @@
+services_vars:
+  ntp:  "{{ addressing | dict2items |  map(attribute='value') | selectattr('group','eq','ntp') }}"
+  dns:  "{{ addressing | dict2items |  map(attribute='value') | selectattr('group','eq','dns') }}"
+  dhcp: "{{ addressing | dict2items |  map(attribute='value') | selectattr('group','eq','dhcp') }}"
+  ns:   "{{ addressing | dict2items |  map(attribute='value') | selectattr('group','eq','ns') }}"

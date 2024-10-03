@@ -1,0 +1,6 @@
+- name: Configure the Router
+  hosts:
+    - vyos
+  gather_facts: false
+  roles:
+    - server_vyos

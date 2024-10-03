@@ -1,0 +1,11 @@
+- name: Handler - Restart Squid
+  when: not server_proxy_reload_only
+  ansible.builtin.systemd_service:
+    name: squid
+    state: restarted
+
+- name: Handler - Reload Squid
+  when: server_proxy_reload_only
+  ansible.builtin.systemd_service:
+    name: squid
+    state: reloaded

@@ -1,0 +1,2 @@
+server_ntp_supernet: "{{ networking.supernet }}"
+server_ntp_sources: "{{ misc_ntp.servers }}"

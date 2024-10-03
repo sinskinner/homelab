@@ -1,0 +1,2 @@
+lxc_debian_role_proxy_address: "{{ misc_proxy.access }}"
+lxc_debian_role_proxy: true

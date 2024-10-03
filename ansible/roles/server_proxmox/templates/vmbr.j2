@@ -1,0 +1,7 @@
+{% set network = server_proxmox_network %}
+{% set address = server_proxmox_address %}
+auto vmbr0.{{ network.vid }}
+iface vmbr0.{{ network.vid }} inet static
+    address {{ address }}
+    netmask {{ network.network | ansible.utils.ipaddr('netmask') }}
+    gateway {{ network.network | ansible.utils.ipaddr('last_usable') }}

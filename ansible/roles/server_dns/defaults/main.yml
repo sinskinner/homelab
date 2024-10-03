@@ -1,0 +1,8 @@
+server_dns_proxy_address: "{{ misc_proxy.access }}"
+server_dns_allowed_access: "{{ [networking.supernet] }}"
+server_dns_private_network: "{{ networking.supernet }}"
+server_dns_adguard_listen: "{{ addressing[inventory_hostname_short].address | ansible.utils.ipaddr('address') }}"
+server_dns_local_upstream: "{{ services_vars.ns | map(attribute='address') | map('ansible.utils.ipaddr', 'address') }}"
+server_dns_authoritative_domains: "{{ resolv.domains | dict2items | map(attribute='value') }}"
+server_dns_authoritative_reverse: "{{ resolv.domains.reverse }}"
+server_dns_recursors: "{{ resolv.recursors }}"

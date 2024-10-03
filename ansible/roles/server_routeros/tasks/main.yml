@@ -1,0 +1,21 @@
+- name: Template the configuration
+  # Using template to copy to the RouterOS doesn't work
+  delegate_to: localhost
+  ansible.builtin.template:
+    src: init.rsc.j2
+    lstrip_blocks: true
+    dest: /tmp/init.rsc
+    mode: "644"
+  register: template_init_script_result
+
+- name: Copy the template Script
+  ansible.netcommon.net_put:
+    mode: text
+    protocol: scp
+    dest: init.rsc
+    src: "{{ template_init_script_result.dest }}"
+
+- name: Run script for reboot applying the new configuration
+  community.routeros.command:
+    commands:
+      - execute script={/system/reset-configuration skip-backup=yes run-after-reset=init.rsc}

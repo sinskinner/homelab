@@ -1,0 +1,2 @@
+server_proxmox_intel: true
+server_proxmox_iommu: true

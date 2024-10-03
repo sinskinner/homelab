@@ -1,0 +1,26 @@
+{# section: service #}
+service {
+    dhcp-relay {
+        {% for netname in server_vyos_config.dhcp %}
+        listen-interface {{ server_vyos_config.services.dhcp.listen ~ '.' ~ server_vyos_networks[netname].vid }}
+        {% endfor %}
+        {% for server in server_vyos_config.services.dhcp.servers %}
+        server {{ server }}
+        {% endfor %}
+        upstream-interface {{ server_vyos_config.services.dhcp.upstream ~ '.' ~ server_vyos_networks[server_vyos_services_network].vid }}
+    }
+    ntp {
+        {% for server in server_vyos_config.services.ntp.servers %}
+        server {{ server }} {
+        }
+        {% endfor %}
+        vrf {{ server_vyos_services_network | upper }}
+    }
+    ssh {
+        listen-address {{ server_vyos_config.services.ssh.listen }}
+        vrf {{ server_vyos_management_network | upper }}
+        disable-password-authentication
+        disable-host-validation
+    }
+}
+{# endsection: service #}

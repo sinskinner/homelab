@@ -1,0 +1,2 @@
+ansible_user: "{{ vault_bootstrap.ansible_user }}"
+ansible_password: "{{ vault_bootstrap.ansible_password }}"

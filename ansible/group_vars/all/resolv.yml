@@ -1,0 +1,24 @@
+resolv:
+  domains:
+    internal: "intra.{{ vault_resolv.domains.external }}"
+    external: "{{ vault_resolv.domains.external }}"
+    reverse: 30.172.in-addr.arpa
+  recursors:
+    - address: 9.9.9.9
+      name: dns.quad9.net
+      port: 853
+    - address: 149.112.112.112
+      name: dns.quad9.net
+      port: 853
+  records:
+    external:
+      ns: 
+        type: A
+        target: "{{ addressing['ns-01'].address | ansible.utils.ipaddr('address') }}"
+      intra:
+        type: NS
+        target: ns.intra
+    internal:
+      ns:
+        type: CNAME
+        target: ns-01

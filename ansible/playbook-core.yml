@@ -1,0 +1,43 @@
+- name: Create the Linux Containers
+  gather_facts: false
+  hosts: lxc
+  roles:
+    - lxc
+
+- name: Configure the Debian LXC
+  gather_facts: false
+  hosts: lxc_debian
+  roles:
+    - lxc_debian
+    - misc_motd
+    - server_openssh
+
+- name: Configure the Proxy Server
+  gather_facts: false
+  hosts: proxy
+  roles:
+    - server_proxy
+
+- name: Configure the DNS Server
+  gather_facts: false
+  hosts: dns
+  roles:
+    - server_dns
+
+- name: Configure the DHCP Server
+  gather_facts: false
+  hosts: dhcp
+  roles:
+    - server_dhcp
+
+- name: Configure the NTP Server
+  gather_facts: false
+  hosts: ntp
+  roles:
+    - server_ntp
+
+- name: Configure the NS Server
+  gather_facts: false
+  hosts: ns
+  roles:
+    - server_ns

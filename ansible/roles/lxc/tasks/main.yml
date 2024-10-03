@@ -1,0 +1,68 @@
+- name: Proxmox - LXC Info
+  delegate_to: localhost
+  community.general.proxmox_vm_info:
+    api_host: "{{ lxc_config_api_host }}"
+    api_user: "{{ lxc_config_api_user }}"
+    api_token_id: "{{ lxc_config_api_token_id }}"
+    api_token_secret: "{{ lxc_config_api_token_secret }}"
+    api_password: "{{ lxc_config_api_password }}"
+    node: "{{ lxc_config_node }}"
+    name: "{{ lxc_config_name }}"
+  register: proxmox_vm_info_result
+
+- name: Proxmox - LXC Create Container
+  when: (proxmox_vm_info_result.proxmox_vms | length) == 0
+  vars:
+    interfaces: "{{ lookup('ansible.builtin.template', 'interfaces.j2') | tojson }}"
+  delegate_to: localhost
+  community.general.proxmox:
+    api_host: "{{ lxc_config_api_host }}"
+    api_user: "{{ lxc_config_api_user }}"
+    api_token_id: "{{ lxc_config_api_token_id }}"
+    api_token_secret: "{{ lxc_config_api_token_secret }}"
+    api_password: "{{ lxc_config_api_password }}"
+    hostname: "{{ lxc_config_hostname }}"
+    nameserver: "{{ lxc_config_nameserver }}"
+    cores: "{{ lxc_config_cores }}"
+    features: "{{ lxc_config_features }}"
+    memory: "{{ lxc_config_memory }}"
+    ostemplate: "{{ lxc_config_ostemplate }}"
+    password: "{{ lxc_config_password }}"
+    pubkey: "{{ lxc_config_pubkey }}"
+    onboot: "{{ lxc_config_onboot }}"
+    searchdomain: "{{ lxc_config_searchdomain }}"
+    unprivileged: "{{ lxc_config_unprivileged }}"
+    disk: "{{ lxc_config_disk }}"
+    node: "{{ lxc_config_node }}"
+    state: present
+    netif: "{{ lxc_config_netif }}"
+  register: proxmox_create_machine_result
+
+- name: Proxmox - Start the Container
+  when: (proxmox_create_machine_result.vmid is defined)
+  delegate_to: localhost
+  community.general.proxmox:
+    api_host: "{{ lxc_config_api_host }}"
+    api_user: "{{ lxc_config_api_user }}"
+    api_token_id: "{{ lxc_config_api_token_id }}"
+    api_token_secret: "{{ lxc_config_api_token_secret }}"
+    api_password: "{{ lxc_config_api_password }}"
+    state: started
+    vmid: "{{ proxmox_create_machine_result.vmid }}"
+
+- name: Proxmox - Alma Instructions
+  ansible.builtin.debug:
+    msg:
+      - Since there is no Alma custom image we need to install the SSHd before continue
+      - export http_proxy={{ lxc_config_proxy }} &&
+          export https_proxy={{ lxc_config_proxy }} &&
+          dnf -y install openssh-server &&
+          systemctl enable sshd --now
+  when: lxc_config_os == "alma"
+
+- name: Wait for SSH Connection
+  ansible.builtin.wait_for_connection:
+    connect_timeout: 5
+    delay: 0
+    sleep: 5
+    timeout: 240

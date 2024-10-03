@@ -1,0 +1,77 @@
+{# section interfaces #}
+interfaces {
+    {# LAG interfaces #}
+    {% for interface in server_vyos_config.interfaces.lag %}
+    bonding {{ interface.name }} {
+        mii-mon-interval 100
+        mode 802.3ad
+        lacp-rate fast
+        hash-policy layer2+3
+        description "{{ interface.description }}"
+        member {
+            {% for member in interface.members %}
+            interface {{ member }}
+            {% endfor %}
+        }
+        {# Virtual VLAN Interfaces #}
+        {% for network in interface.vifs | dict2items | rejectattr('key', 'eq', server_vyos_config.extra.wan_vlan) %}
+        vif {{ network.value.vid }} {
+            address {{ network.value.network | ansible.utils.ipaddr('last_usable') }}/{{ network.value.network | ansible.utils.ipaddr('prefix') }}
+            vrf {{ network.key | upper }}
+            description "{{ network.key | upper }} VLAN"
+        }
+        {% endfor %}
+    }
+    {% endfor %}
+    {# Bridge Interfaces #}
+    {% for interface in server_vyos_config.interfaces.bridge %}
+    bridge {{ interface.name }} {
+        description "{{ interface.description }}"
+        enable-vlan
+        member {
+            {% for member in interface.members %}
+            interface {{ member.name }} {
+                {% for vlan in member.vifs | map(attribute='vid') %}
+                allowed-vlan {{ vlan }}
+                {% endfor %}
+            }
+            {% endfor %}
+        }
+        {% for vif in interface.members | map(attribute = 'vifs') | flatten %}
+        vif {{ vif.vid }} {
+            description "{{ vif.description }}"
+            vrf "{{ vif.vrf | upper }}"
+        }
+        {% endfor %}
+
+    }
+    {% endfor %}
+    {% for interface in server_vyos_config.interfaces.pppoe %}
+    pppoe {{ interface.name }} {
+        authentication {
+            password {{ interface.authentication.password }}
+            username {{ interface.authentication.username }}
+        }
+        no-peer-dns
+        ip {
+            adjust-mss clamp-mss-to-pmtu
+        }
+        vrf {{ server_vyos_config.extra.wan_vlan | upper }}
+        source-interface {{ interface.source }}
+    }
+    {% endfor %}
+    {# logical interfaces #}
+    {% for interface in server_vyos_config.interfaces.logical %}
+    ethernet {{ interface.name }} {
+        hw-id {{ interface.hw | lower }}
+        offload {
+            gro
+            gso
+            sg
+            tso
+        }
+    }
+    {% endfor %}
+    loopback lo {
+    }
+}

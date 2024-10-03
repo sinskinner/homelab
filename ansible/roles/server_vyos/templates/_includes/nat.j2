@@ -1,0 +1,30 @@
+{# section: nat #}
+nat {
+    {% for nat in server_vyos_config.nat.source %}
+    source {
+        rule {{ loop.index * 5 }} {
+            outbound-interface {
+                name {{ nat.out }}
+            }
+            translation {
+                address {{ nat.translation.address }}
+            }
+        }
+    }
+    {% endfor %}
+     destination {
+        rule 5 {
+            description "Redirect NTP to internal NTP"
+            destination {
+                address !{{ server_vyos_hosts['ntp-01'] | ansible.utils.ipaddr('address') }}
+                port 123
+            }
+            protocol udp
+            translation {
+                address {{ server_vyos_hosts['ntp-01'] | ansible.utils.ipaddr('address') }}
+                port 123
+            }
+        }
+    }
+}
+{# endsection: nat #}

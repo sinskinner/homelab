@@ -1,0 +1,9 @@
+#+TITLE: Super Home Lab
+
+#+begin_quote
+*What does the stuff in your lab do?*
+
+It converts money into noise
+
+/- TechGeek01/
+#+end_quote

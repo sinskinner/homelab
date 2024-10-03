@@ -1,0 +1,16 @@
+- name: Remove the default MOTD file from Debian
+  when: misc_motd_distro == 'debian'
+  ansible.builtin.file:
+    path: /etc/update-motd.d/10-uname
+    state: absent
+
+- name: Copy the dynamic MOTD
+  ansible.builtin.copy:
+    src: 50-motd
+    mode: "0755"
+    dest: /etc/update-motd.d/50-motd
+
+- name: Remove the default /etc/motd
+  ansible.builtin.file:
+    path: /etc/motd
+    state: absent

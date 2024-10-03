@@ -1,0 +1,18 @@
+rule 5 {
+  action accept
+  protocol icmp
+  description "Permitir Echo Requests"
+  icmp {
+    type 8
+    code 0
+  }
+}
+
+rule 10 {
+    action accept
+    protocol tcp
+    description "Permitir HTTP e HTTPs"
+    destination {
+        port 80,443
+    }
+}

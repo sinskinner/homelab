@@ -1,0 +1,11 @@
+- name: Configure the Hypervisors
+  hosts: proxmox
+  gather_facts: false
+  roles:
+    - client_ntp
+    - server_proxmox
+    - client_dns
+    - misc_motd
+    - misc_hosts
+    - server_openssh
+    - misc_reboot

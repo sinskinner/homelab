@@ -1,0 +1,18 @@
+auto lo
+iface lo inet loopback
+iface eno1 inet manual
+iface enp1s0 inet manual
+iface enp2s0 inet manual
+iface enp4s0 inet manual
+
+auto vmbr0
+iface vmbr0 inet manual
+	bridge-ports enp1s0
+	bridge-stp off
+	bridge-fd 0
+	bridge-vlan-aware yes
+	bridge-vids 2-4094
+
+{% include 'vmbr.j2' %}
+
+source /etc/network/interfaces.d/*

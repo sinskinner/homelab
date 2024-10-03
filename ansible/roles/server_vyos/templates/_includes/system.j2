@@ -1,0 +1,46 @@
+{# section: system #}
+system {
+    config-management {
+        commit-revisions 10
+    }
+    conntrack {
+        modules {
+            ftp
+            h323
+            nfs
+            pptp
+            sip
+            sqlnet
+            tftp
+        }
+    }
+    host-name {{ inventory_hostname }}
+    login {
+        banner {
+            post-login "This is {{ inventory_hostname }}."
+            pre-login "Welcome to the ultimate border."
+        }
+        user {{ server_vyos_auth_user }} {
+            authentication {
+                plaintext-password "{{ server_vyos_auth_pass }}"
+                public-keys main {
+                    {% set k = server_vyos_auth_ssh | split(" ") %}
+                    key "{{ k[1] }}"
+                    type {{ k[0] }}
+
+                }
+            }
+        }
+    }
+    syslog {
+        global {
+            facility all {
+                level info
+            }
+            facility local7 {
+                level debug
+            }
+        }
+    }
+}
+{# endsection: system #}

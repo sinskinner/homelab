@@ -1,0 +1,34 @@
+lxc_config_cores: 1
+lxc_config_features:
+    - nesting=1
+lxc_config_hostname: &hname "{{ inventory_hostname }}"
+lxc_config_memory: 512
+lxc_config_nameserver: "{{ services_vars.dns | map(attribute='address') | map('ansible.utils.ipaddr', 'address') | join(',') }}"
+lxc_config_password: "{{ proxmox_hosts.cluster.controller_password }}"
+lxc_config_pubkey: "{{ lxc.security.key }}"
+lxc_config_onboot: true
+lxc_config_searchdomain: "{{ resolv.domains.internal }}"
+lxc_config_unprivileged: true
+lxc_config_ostemplate: "local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst"
+lxc_config_disk: "local-lvm:1"
+lxc_config_node: "{{ proxmox_hosts.cluster.controller }}"
+lxc_config_api_host: "{{ addressing[proxmox_hosts.cluster.controller].address | ansible.utils.ipaddr('address') }}:8006"
+lxc_config_api_user: "{{ proxmox_hosts.cluster.controller_user }}"
+lxc_config_api_token_id: "{{ proxmox_hosts.cluster.controller_token_id }}"
+lxc_config_api_token_secret: "{{ proxmox_hosts.cluster.controller_token_secret }}"
+lxc_config_api_password: "{{ proxmox_hosts.cluster.controller_password }}"
+lxc_config_name: *hname
+lxc_config_netif: "{{ lookup('ansible.builtin.template', 'interfaces.j2') | tojson }}"
+lxc_config_proxy: "{{ misc_proxy.access }}"
+lxc_config_os: "debian"
+lxc_config_network_data: "{{ networking.subnets }}"
+lxc_config_network_config:
+    - name: net0
+      vlan: "{{ networking.subnets.srv.vid }}"
+      address: "{{ addressing[inventory_hostname_short].address | ansible.utils.ipaddr('address') }}"
+      network: "{{ networking.subnets.srv.network }}"
+      gw: true
+    - name: net1
+      vlan: "{{ networking.subnets.mgt.vid }}"
+      address: "{{ addressing[inventory_hostname_short ~ '-m'].address | ansible.utils.ipaddr('address') }}"
+      network: "{{ networking.subnets.mgt.network }}"

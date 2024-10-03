@@ -1,0 +1,53 @@
+{% include 'templates/default.rsc.j2' %}
+
+{# Set the hostname #}
+/system identity set name={{ inventory_hostname }}
+{# First, remove all interfaces #}
+/interface bridge port remove [find interface!={{ server_routeros_config.management.interface }}]
+
+{# set the NTP Client #}
+{% for server in server_routeros_config.ntp %}
+/system ntp client servers add address={{ server }}
+{% endfor %}
+/system ntp client set enabled=yes
+
+{# Adds the IPMI VLAN #}
+/interface vlan add vlan-id={{ server_routeros_config.management.data.vid }} name={{ 'vlan' ~ server_routeros_config.management.data.vid }} interface=bridge comment="IPMI VLAN"
+/ip address add address={{ server_routeros_config.management.address }}/{{ server_routeros_config.management.data.network | ansible.utils.ipaddr('netmask') }}\
+ interface={{ 'vlan' ~ server_routeros_config.management.data.vid }}
+
+{# Add the LAG interfaces #}
+{% for i in server_routeros_config.interfaces.lag %}
+    /interface bonding add name={{ i.name }} slaves={{ i.members | join(',') }} comment="{{ i.comment }}" lacp-rate=1sec mii-interval=100ms link-monitoring=mii transmit-hash-policy=layer-2-and-3 mode=802.3ad
+{% endfor %}
+
+{# Add the interfaces back to the Bridge #}
+{% for i in server_routeros_config.interfaces.logical %}
+    {% if i.name == server_routeros_config.management.interface %}
+        /interface bridge port set [find interface={{ i.name }}] comment="{{ i.comment | default("") }}" frame-types={{ i.frame_types }} ingress-filtering=yes bridge=bridge hw=yes
+    {% else %}
+        /interface bridge port add interface={{ i.name }} pvid={{ i.pvid | default(1) }} comment="{{ i.comment | default("") }}" frame-types={{ i.frame_types }} ingress-filtering=yes bridge=bridge hw=yes
+    {% endif %}
+{% endfor -%}
+
+{# Create the VLANs on the Bridge #}
+{% for i in server_routeros_config.vlans -%}
+    /interface bridge vlan add vlan-ids={{ i.vid }} bridge=bridge tagged="{{ i.interfaces.tagged | default ([]) | join(",") }}" untagged="{{ i.interfaces.untagged | default([]) | join(",") }}" comment="{{ i.name | upper }} VLAN"
+{% endfor -%}
+
+{# Enable the Bridge VLAN Filtering #}
+/interface bridge set ingress-filtering=yes vlan-filtering=yes frame-types=admit-only-vlan-tagged bridge
+
+
+{# Adds the default gateway #}
+/ip route add gateway={{ server_routeros_config.management.data.network | ansible.utils.ipaddr('last_usable') }}
+
+{# Remove the default user and adds other users with keys #}
+{% for i in server_routeros_config_users %}
+/user add name="{{ i.name }}" password="{{ i.password }}" group="{{i.group}}"
+/user ssh-keys add user="{{ i.name }}" key="{{ i.key }}"
+{% endfor %}
+
+/user remove admin
+
+/system/clock set time-zone-name=UTC

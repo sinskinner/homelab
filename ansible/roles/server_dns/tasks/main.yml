@@ -1,0 +1,62 @@
+- name: Set Services facts
+  ansible.builtin.service_facts:
+  register: service_facts_adguard_result
+
+- name: Set AdGuard Install fact
+  ansible.builtin.set_fact:
+    install_adguard: "{{ service_facts_adguard_result.ansible_facts.services['AdGuardHome.service'] is undefined }}"
+
+- name: Install Unbound
+  ansible.builtin.apt:
+    name:
+      - unbound
+
+- name: Debug
+  ansible.builtin.debug:
+    msg: "{{ services }}"
+
+- name: Template the Unbound configuration
+  ansible.builtin.template:
+    src: unbound.conf.j2
+    dest: /etc/unbound/unbound.conf
+    mode: "644"
+  notify: Handler - Restart Unbound
+
+- name: Download AdGuardHome
+  delegate_to: localhost
+  when: install_adguard
+  ansible.builtin.get_url:
+    url: https://github.com/AdguardTeam/AdGuardHome/releases/download/v0.107.52/AdGuardHome_linux_amd64.tar.gz
+    checksum: sha256:a2645ecf23ccadbb0d97b324aef9bc67d126b8e394428ae5a23c2f1b73c5d140
+    dest: /tmp/
+    mode: "644"
+  register: download_adguard_result
+
+- name: Unarchive AdGuardHome
+  when: install_adguard
+  ansible.builtin.unarchive:
+    src: "{{ download_adguard_result.dest }}"
+    remote_src: false
+    dest: /opt/
+    mode: "644"
+
+- name: Change AdGuardHome Permissions
+  when: install_adguard
+  ansible.builtin.file:
+    mode: "744"
+    path: /opt/AdGuardHome/AdGuardHome
+    state: file
+
+- name: Template the AdGuard configuration
+  ansible.builtin.template:
+    src: adguard.yml.j2
+    dest: /opt/AdGuardHome/adguard.yml
+    mode: "600"
+  notify: Handler - Restart AdGuardHome
+
+- name: Install AdGuard when AdGuardHome is not present on service_facts_adguard_result
+  when: install_adguard
+  ansible.builtin.command:
+    cmd: /opt/AdGuardHome/AdGuardHome -s install -c /opt/AdGuardHome/adguard.yml
+  register: command_adguard_installation_result
+  changed_when: command_adguard_installation_result.rc == 0

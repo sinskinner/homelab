@@ -1,0 +1,12 @@
+{% include "_inc/zone-header.j2" %}
+
+{% for k, v in server_ns_hosts.items() %}
+{{ k }} IN A {{ v.address | ansible.utils.ipaddr('address') }}
+{% endfor %}
+
+{% for k, v in server_ns_records_internal.items() %}
+{{ k }} IN {{ v.type }} {{ v.target }}
+{% endfor %}
+
+
+{% include '_inc/extra_records.j2' ignore missing %}

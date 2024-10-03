@@ -1,0 +1,4 @@
+- name: Handler - Restart the Chrony service
+  ansible.builtin.systemd_service:
+    name: chronyd
+    state: restarted

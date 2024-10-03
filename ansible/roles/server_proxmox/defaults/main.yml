@@ -1,0 +1,6 @@
+server_proxmox_ssh_key: null
+server_proxmox_intel: false
+server_proxmox_iommu: false
+server_proxmox_nvidia: false
+server_proxmox_network: "{{ networking.subnets.virt }}"
+server_proxmox_address: "{{ addressing[inventory_hostname_short].address }}"

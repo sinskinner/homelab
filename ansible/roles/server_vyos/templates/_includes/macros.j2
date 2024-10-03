@@ -1,0 +1,13 @@
+{# beginmacro: create_static_route #}
+{%- macro create_static_route(k = '') %}
+static {
+    {% for target in (server_vyos_config.routes[k] | default([])) %}
+    route {{ server_vyos_networks[target.name].network }} {
+        interface {{ target.out | default(server_vyos_config.extra.internal ~ '.' ~ server_vyos_networks[target.name].vid) }} {
+            vrf {{ target.name | upper }}
+        }
+    }
+    {% endfor %}
+}
+{%- endmacro %}
+{# endmacro #}

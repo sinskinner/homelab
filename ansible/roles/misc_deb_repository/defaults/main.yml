@@ -1,0 +1,4 @@
+misc_deb_repository_proxy: "{{ misc_proxy.access }}"
+misc_deb_repository_gpg_key:
+misc_deb_repository_id:
+misc_deb_repository_repo:

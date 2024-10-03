@@ -1,0 +1,24 @@
+- name: Template the configuration
+  ansible.builtin.template:
+    lstrip_blocks: true
+    src: config.j2
+    dest: /tmp/config.txt
+    mode: "0644"
+  register: server_vyos_template_config_result
+
+- name: Copy the script # noqa: no-handler
+  when: server_vyos_template_config_result.changed
+  ansible.builtin.copy:
+    src: load-template.sh
+    dest: /tmp/
+    mode: "744"
+
+- name: Load the configuration # noqa: no-handler
+  when: server_vyos_template_config_result.changed
+  become: true
+  become_method: ansible.builtin.sudo
+  ansible.builtin.command:
+    cmd: sg vyattacfg -c /tmp/load-template.sh
+  register: server_vyos_load_command_result
+  changed_when: server_vyos_load_command_result.rc == 0
+  failed_when: server_vyos_load_command_result.rc != 0

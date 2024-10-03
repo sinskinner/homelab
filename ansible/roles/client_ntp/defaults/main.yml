@@ -1,0 +1,2 @@
+client_ntp_sysclock: false
+client_ntp_servers: "{{ services_vars.ntp | map(attribute='address') | map('ansible.utils.ipaddr', 'address') }}"

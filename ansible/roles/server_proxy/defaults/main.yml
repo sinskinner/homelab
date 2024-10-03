@@ -1,0 +1,4 @@
+server_proxy_allow_networks: "{{ networking.supernet }}"
+server_proxy_acls: "{{ proxy_acls }}"
+server_proxy_listen_address: []
+server_proxy_reload_only: false

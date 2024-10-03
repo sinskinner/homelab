@@ -1,0 +1,13 @@
+- name: Install the Kea DHCP Server
+  ansible.builtin.apt:
+    name:
+      - isc-kea-dhcp4>=2.6
+      - isc-kea-dhcp-ddns>=2.6
+
+- name: Configure the Kea DHCP Server
+  ansible.builtin.template:
+    src: kea-dhcp4.conf.j2
+    dest: /etc/kea/kea-dhcp4.conf
+    lstrip_blocks: true
+    mode: "0644"
+  notify: Handler - Restart the Kea Service

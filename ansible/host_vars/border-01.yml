@@ -1,0 +1,83 @@
+server_vyos_networks: "{{ networking.subnets }}"
+server_vyos_auth_user: "{{ vault_vyos_auth.user }}"
+server_vyos_auth_pass: "{{ vault_vyos_auth.password }}"
+server_vyos_auth_ssh: "{{ vault_vyos_auth.public_key }}"
+server_vyos_services_network: srv
+server_vyos_management_network: mgt
+server_vyos_config:
+  interfaces:
+    logical:
+      - name: eth0
+        hw: 0c:c4:7a:58:64:85
+      - name: eth1
+        hw: 0c:c4:7a:58:64:86
+      - name: eth2
+        hw: 0c:c4:7a:58:64:87
+      - name: eth3
+        hw: b4:96:91:98:12:02
+    lag:
+      - name: bond0
+        description: Internal
+        members:
+          - eth0
+          - eth1
+          - eth2
+        vifs: "{{ networking.subnets }}"
+    pppoe:
+      - name: pppoe0
+        description: "TELESP"
+        authentication: 
+          username: "{{ vault_vyos_telesp.username }}"
+          password: "{{ vault_vyos_telesp.password }}"
+        source: "br0.{{ networking.subnets.wan.vid }}"
+    bridge:
+      - name: br0
+        description: SFP Interface
+        members:
+          - name: eth3
+            vifs:
+              - vid: "{{ networking.subnets.wan.vid }}"
+                description: "{{ networking.subnets.wan.description }}"
+                vrf: WAN
+  nat:
+    source:
+      - out: pppoe0
+        translation:
+          address: masquerade
+  services:
+    dhcp:
+      listen: bond0
+      servers: "{{ services_vars.dhcp | map(attribute='address') | map('ansible.utils.ipaddr', 'address') }}"
+      upstream: bond0
+    ntp: 
+      servers: "{{ services_vars.ntp | map(attribute='address') | map('ansible.utils.ipaddr', 'address') }}"
+    ssh:
+      listen: "{{ addressing[inventory_hostname_short ~ '-m'].address | ansible.utils.ipaddr('address') }}"
+  address_groups:
+    dns_servers: "{{ resolv.recursors | map(attribute='address') }}"
+    ntp_servers: "{{ misc_ntp.servers | map(attribute='address') }}"
+  extra:
+    internal: bond0
+    wan_vlan: wan
+  dhcp: "{{ networking.dhcp }}"
+  routes:
+    srv:
+      - name: wan
+        out: pppoe0
+      - name: devices
+      - name: ipmi
+      - name: virt
+    ipmi:
+      - name: srv
+    virt:
+      - name: srv
+    wan:
+      - name: srv
+      - name: devices
+    devices:
+      - name: srv
+      - name: wan
+        out: pppoe0
+    self:
+      - name: srv
+

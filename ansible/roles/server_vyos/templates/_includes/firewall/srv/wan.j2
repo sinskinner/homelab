@@ -1,0 +1,52 @@
+rule 5 {
+  action accept
+  protocol icmp
+  description "Echo Requests"
+  icmp {
+    type 8
+    code 0
+  }
+}
+
+rule 10 {
+  action accept
+  protocol tcp
+  description "Proxy Access to the HTTP and HTTPS"
+  destination {
+    port 80,443
+  }
+  source {
+    address {{ server_vyos_hosts['proxy-01'].address | ansible.utils.ipaddr('address') }}
+  }
+}
+{% for server in ['proxy-01', 'dns-01']%}
+rule {{ 15 + loop.index0}} {
+  action accept
+  protocol tcp_udp
+  description "{{ server}} access to external DNS servers"
+  destination {
+    port 53,853
+    group {
+      address-group DNS_SERVERS
+    }
+  }
+  source {
+    address {{ server_vyos_hosts[server].address | ansible.utils.ipaddr('address') }}
+  }
+}
+{% endfor %}
+
+rule 20 {
+  action accept
+  protocol tcp_udp
+  description "Permitir acesso ao servers NTP"
+  destination {
+    port 123,4460
+    group {
+      address-group NTP_SERVERS
+    }
+  }
+  source {
+    address {{ server_vyos_hosts['ntp-01'].address | ansible.utils.ipaddr('address') }}
+  }
+}
