@@ -11,3 +11,11 @@
     lstrip_blocks: true
     mode: "0644"
   notify: Handler - Restart the Kea Service
+
+- name: Configure the Kea DDNS Server
+  ansible.builtin.template:
+    src: kea-dhcp-ddns.conf.j2
+    dest: /etc/kea/kea-dhcp-ddns.conf
+    mode: "0644"
+    lstrip_blocks: true
+  notify: Handler - Restart the Kea DDNS Service

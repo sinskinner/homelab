@@ -5,6 +5,11 @@
             "interfaces": {{ server_dhcp_listen | ansible.builtin.to_json }},
             "dhcp-socket-type": "udp"
         },
+        "dhcp-ddns": {
+            "enable-updates": true,
+        },
+        "ddns-update-on-renew": true,
+        "ddns-replace-client-name": "always",
         "control-socket": {
             "socket-type": "unix",
             "socket-name": "/run/kea/kea4-ctrl-socket"
@@ -44,6 +49,8 @@
             "pools": [{
                 "pool": st_range ~ '-' ~ en_range
             }],
+            "ddns-qualifying-suffix": v ~ '.' ~ server_dhcp_domain_search,
+            "ddns-generated-prefix": "dhcp",
             "reservations": reservations,
             "option-data": [
                 {

@@ -1,0 +1,49 @@
+{% set ddns_addresses = [] %}
+{% for i in server_dhcp_ns %}
+{% set _ = ddns_addresses.append({
+    "ip-address": i,
+    "port": server_dhcp_ddns_port
+}) %}
+{% endfor %}
+{% set ddns_config = { "DhcpDdns": {
+  "ip-address": "127.0.0.1",
+  "port": 53001,
+  "control-socket": {
+      "socket-type": "unix",
+      "socket-name": "/tmp/kea-ddns-ctrl-socket"
+  },
+  "tsig-keys": [],
+  "forward-ddns" : {
+    "ddns-domains": [
+            {
+                "name": server_dhcp_domain_search ~ '.',
+                "dns-servers": ddns_addresses,
+            },
+        ]
+  },
+  "reverse-ddns" : {
+    "ddns-domains": [
+        {
+            "name": server_dhcp_domain_reverse ~ '.',
+            "dns-servers": ddns_addresses,
+        }
+    ]
+  },
+  "loggers": [
+    {
+        "name": "kea-dhcp-ddns",
+        "output-options": [
+            {
+                "output": "syslog",
+                "pattern": "%-5p %m\n"
+            }
+        ],
+        "severity": "INFO",
+        "debuglevel": 0
+    }
+  ]
+}
+}
+%}
+
+{{ ddns_config | ansible.builtin.to_json(indent=2) }}
