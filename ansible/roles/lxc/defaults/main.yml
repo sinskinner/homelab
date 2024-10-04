@@ -20,7 +20,7 @@ lxc_config_api_password: "{{ proxmox_hosts.cluster.controller_password }}"
 lxc_config_name: *hname
 lxc_config_netif: "{{ lookup('ansible.builtin.template', 'interfaces.j2') | tojson }}"
 lxc_config_proxy: "{{ misc_proxy.access }}"
-lxc_config_os: "debian"
+lxc_config_os: "{{ os_type }}"
 lxc_config_network_data: "{{ networking.subnets }}"
 lxc_config_network_config:
     - name: net0

@@ -13,3 +13,5 @@ misc_ntp:
       address: 200.186.125.195
     - name: d.st1.ntp.br
       address: 200.20.186.76
+misc_pki:
+  access: "https://certificates.{{ resolv.domains.internal }}"

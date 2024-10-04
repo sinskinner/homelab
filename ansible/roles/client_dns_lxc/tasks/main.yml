@@ -1,0 +1,47 @@
+- name: Get LXC information
+  delegate_to: localhost
+  community.general.proxmox_vm_info:
+    api_host: "{{ client_dns_lxc_api_host }}"
+    api_user: "{{ client_dns_lxc_api_user }}"
+    api_token_id: "{{ client_dns_lxc_api_token_id }}"
+    api_token_secret: "{{ client_dns_lxc_api_token_secret }}"
+    api_password: "{{ client_dns_lxc_api_password }}"
+    node: "{{ client_dns_lxc_node }}"
+    name: "{{ client_dns_lxc_name }}"
+  register: proxmox_vm_info_result
+
+- name: Configure the DNS Server
+  when: proxmox_vm_info_result | length > 0
+  delegate_to: localhost
+  community.general.proxmox:
+    vmid: "{{ item.vmid }}"
+    api_host: "{{ client_dns_lxc_api_host }}"
+    api_user: "{{ client_dns_lxc_api_user }}"
+    api_token_id: "{{ client_dns_lxc_api_token_id }}"
+    api_token_secret: "{{ client_dns_lxc_api_token_secret }}"
+    api_password: "{{ client_dns_lxc_api_password }}"
+    nameserver: "{{ client_dns_lxc_nameserver }}"
+    hostname: "{{ inventory_hostname_short }}"
+    node: "{{ item.node }}"
+    update: true
+    state: present
+  loop: "{{ proxmox_vm_info_result.proxmox_vms }}"
+  register: proxmox_vm_reconfigure_result
+
+- name: Restart the modified servers # noqa: no-handler
+  when: item.changed
+  delegate_to: localhost
+  timeout: 600
+  community.general.proxmox:
+    vmid: "{{ item.vmid }}"
+    api_host: "{{ client_dns_lxc_api_host }}"
+    api_user: "{{ client_dns_lxc_api_user }}"
+    api_token_id: "{{ client_dns_lxc_api_token_id }}"
+    api_token_secret: "{{ client_dns_lxc_api_token_secret }}"
+    api_password: "{{ client_dns_lxc_api_password }}"
+    nameserver: "{{ client_dns_lxc_nameserver }}"
+    hostname: "{{ inventory_hostname_short }}"
+    node: "{{ item.item.node }}"
+    update: true
+    state: restarted
+  loop: "{{ proxmox_vm_reconfigure_result.results }}"

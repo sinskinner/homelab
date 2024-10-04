@@ -1,0 +1,110 @@
+- name: Install jq
+  ansible.builtin.apt:
+    name:
+      - jq
+
+- name: Download the stepca and stepcli
+  delegate_to: localhost
+  ansible.builtin.get_url:
+    url: "{{ item }}"
+    dest: /tmp/
+    mode: "644"
+  register: pki_dl_result
+  loop:
+    - https://dl.smallstep.com/cli/docs-ca-install/latest/step-cli_amd64.deb
+    - https://dl.smallstep.com/certificates/docs-ca-install/latest/step-ca_amd64.deb
+
+- name: Copy to remote host
+  ansible.builtin.copy:
+    dest: /tmp/
+    src: "{{ item.dest }}"
+    mode: "0644"
+  loop: "{{ pki_dl_result.results }}"
+  register: pki_copy_result
+
+- name: Create the StepCA group
+  ansible.builtin.group:
+    name: "{{ server_pki_system_group }}"
+
+- name: Create the StepCA user
+  ansible.builtin.user:
+    system: true
+    group: "{{ server_pki_system_group }}"
+    name: "{{ server_pki_system_user }}"
+    shell: /sbin/nologin
+    home: "{{ server_pki_system_home }}"
+    create_home: true
+
+
+- name: Install the stepca and stepcli
+  ansible.builtin.apt:
+    deb: "{{ item.dest }}"
+  loop: "{{ pki_copy_result.results }}"
+
+- name: Create the PKI Password File
+  ansible.builtin.lineinfile:
+    path: "{{ server_pki_system_home }}/credentials.txt"
+    mode: "600"
+    owner: stepca
+    group: stepca
+    create: true
+    line: "{{ server_pki_password }}"
+  register: pki_pass_file_result
+
+- name: Create the Certificate Authority
+  become: true
+  become_method: ansible.builtin.sudo
+  become_user: "{{ server_pki_system_user }}"
+  environment:
+    STEPPATH: "{{ server_pki_system_home }}"
+  ansible.builtin.command: >-
+    step ca init --ssh --acme \
+      --authority={{ server_pki_authority | quote }} --address={{ server_pki_listen ~ ':443' }} \
+      --dns={{ server_pki_dns }} --deployment-type=standalone --name={{ server_pki_authority | quote }} \
+      --remote-management --provisioner={{ server_pki_username | quote }} \
+      --password-file={{ server_pki_system_home }}/credentials.txt
+  register: pki_create_ca
+  changed_when: pki_create_ca.rc == 0
+
+- name: Configure the Claims
+  become: true
+  become_method: ansible.builtin.sudo
+  environment:
+    STEPPATH: "{{ server_pki_system_home }}"
+  become_user: "{{ server_pki_system_user }}"
+  ansible.builtin.shell: "jq '.authority.claims={{ claims | ansible.builtin.to_json }}' \
+    \"$(step path)/config/ca.json\" >> /tmp/ca.json"
+  vars:
+    claims:
+      minTLSCertDuration: 5m
+      maxTLSCertDuration: 8760h
+      defaultTLSCertDuration": 8760h
+      disableRenewal: false
+      allowRenewalAfterExpiry: false
+      minHostSSHCertDuration: 5m
+      maxHostSSHCertDuration: 1680h
+      defaultHostSSHCertDuration: 8760h
+      minUserSSHCertDuration: 5m
+      maxUserSSHCertDuration: 8760h
+      defaultUserSSHCertDuration: 8760h
+  register: pki_edit_claims_result
+  changed_when: pki_edit_claims_result == 0
+
+- name: Move the new configuration
+  become: true
+  become_method: ansible.builtin.sudo
+  environment:
+    STEPPATH: "{{ server_pki_system_home }}"
+  become_user: "{{ server_pki_system_user }}"
+  ansible.builtin.shell: mv /tmp/ca.json "$(step path)/config/ca.json"
+  register: pki_move_claims_result
+  changed_when: pki_move_claims_result == 0
+
+- name: Configure the systemd unit
+  ansible.builtin.template:
+    src: stepca.service.j2
+    dest: /etc/systemd/system/stepca.service
+    mode: "0644"
+  notify:
+    - Handler - Enable and Start the Systemd
+    - Handler - Enable and start the StepCA Service

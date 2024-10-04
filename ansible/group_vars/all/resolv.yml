@@ -22,3 +22,6 @@ resolv:
       ns:
         type: CNAME
         target: ns-01
+      certificates:
+        type: CNAME
+        target: cert-01

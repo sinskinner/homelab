@@ -1,0 +1,9 @@
+server_pki_username: "{{ vault_server_pki.username }}"
+server_pki_password: "{{ vault_server_pki.password }}"
+server_pki_authority: "{{ vault_server_pki.authority }}"
+server_pki_dns: "certificates.{{ resolv.domains.internal }}"
+server_pki_system_user: "{{ vault_server_pki.system_user }}"
+server_pki_system_group: "{{ vault_server_pki.system_group }}"
+server_pki_system_home: /opt/stepca
+server_pki_listen: "{{ addressing['cert-01'].address | ansible.utils.ipaddr('address') }}"
+server_pki_proxy: "{{ misc_proxy.access }}"

@@ -15,6 +15,7 @@ lxc:
     dhcp-01:
     ntp-01:
     ns-01:
+    cert-01:
 
 lxc_debian:
   hosts:
@@ -23,6 +24,7 @@ lxc_debian:
     dhcp-01:
     ntp-01:
     ns-01:
+    cert-01:
 
 proxmox_hosts:
   hosts:
@@ -31,6 +33,7 @@ proxmox_hosts:
     dhcp-01:
     ntp-01:
     ns-01:
+    cert-01:
 
 proxy:
   hosts:
@@ -55,3 +58,8 @@ ns:
   hosts:
     ns-01:
       ansible_host: 172.30.194.5
+
+pki:
+  hosts:
+    cert-01:
+      ansible_host: 172.30.194.6

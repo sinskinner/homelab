@@ -1,0 +1,9 @@
+- name: Handler - Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Handler - Enable and start the StepCA Service
+  ansible.builtin.systemd:
+    enabled: true
+    state: restarted
+    service: stepca

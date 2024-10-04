@@ -1,0 +1,9 @@
+client_dns_lxc_node: "{{ proxmox_hosts.cluster.controller }}"
+client_dns_lxc_api_host: "{{ addressing[proxmox_hosts.cluster.controller].address | ansible.utils.ipaddr('address') }}:8006"
+client_dns_lxc_api_user: "{{ proxmox_hosts.cluster.controller_user }}"
+client_dns_lxc_api_token_id: "{{ proxmox_hosts.cluster.controller_token_id }}"
+client_dns_lxc_api_token_secret: "{{ proxmox_hosts.cluster.controller_token_secret }}"
+client_dns_lxc_api_password: "{{ proxmox_hosts.cluster.controller_password }}"
+client_dns_lxc_nameserver: "{{ services_vars.dns | map(attribute='address') \
+  | map('ansible.utils.ipaddr', 'address') | join('') }}"
+client_dns_lxc_name: "{{ inventory_hostname_short }}"

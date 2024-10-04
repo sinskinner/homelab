@@ -41,3 +41,23 @@
   hosts: ns
   roles:
     - server_ns
+
+- name: Configure the Public Key Infrastructure
+  gather_facts: false
+  hosts: pki
+  roles:
+    - server_pki
+
+- name: Reconfigure containers to use the internal DNS
+  gather_facts: false
+  hosts: lxc
+  tags: client_dns_lxc
+  roles:
+    - client_dns_lxc
+
+- name: Install the PKI root certificate
+  gather_facts: false
+  hosts: lxc
+  tags: client_pki
+  roles:
+    - client_pki

@@ -21,3 +21,4 @@ proxy_acls:
       - static.tp-link.com
       - .mongodb.org
       - pgp.mongodb.com
+      - dl.smallstep.com

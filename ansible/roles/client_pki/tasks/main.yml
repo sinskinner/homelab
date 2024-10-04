@@ -1,0 +1,44 @@
+- name: Download the stepcli - DEB
+  delegate_to: localhost
+  when: client_pki_os == 'debian'
+  ansible.builtin.get_url:
+    url: "https://dl.smallstep.com/cli/docs-ca-install/latest/step-cli_amd64.deb"
+    dest: /tmp/
+    mode: "644"
+  register: client_pki_dl_result
+
+- name: Download the stepcli - RPM
+  delegate_to: localhost
+  when: client_pki_os == 'alma'
+  ansible.builtin.get_url:
+    url: "https://dl.smallstep.com/cli/docs-ca-install/latest/step-cli_amd64.rpm"
+    dest: /tmp/
+    mode: "644"
+  register: client_pki_dl_result
+
+- name: Copy to remote host  - DEB
+  when: client_pki_os == 'debian'
+  ansible.builtin.copy:
+    dest: /tmp/
+    # Not using the result since when the package is already downloaded, the 'dest' isnt set.
+    src: /tmp/step-cli_amd64.deb
+    mode: "0644"
+  register: client_pki_copy_result
+
+- name: Install the stepcli - DEB
+  when: client_pki_os == 'debian'
+  ansible.builtin.apt:
+    deb: /tmp/step-cli_amd64.deb
+
+- name: Install the stepca and stepcli - RPM
+  when: client_pki_os == 'alma'
+  ansible.builtin.dnf:
+    name: /tmp/step-cli_amd64.rpm
+    disable_gpg_check: true
+    state: present
+
+- name: Bootstrap the step-cli
+  ansible.builtin.command:
+    cmd: "step ca bootstrap --ca-url={{ client_pki_ca_url }} \
+      --fingerprint={{ client_pki_fingerprint }} --install"
+    creates: ~/.step
