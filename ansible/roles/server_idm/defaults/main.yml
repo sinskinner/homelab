@@ -1,0 +1,8 @@
+server_idm_admin_password: "{{ vault_server_idm.admin_password }}"
+server_idm_domain: "{{ resolv.domains.internal }}"
+server_idm_ds_password: "{{ vault_server_idm.ds_password }}"
+server_idm_hostname: "{{ inventory_hostname_short }}.{{ resolv.domains.internal }}"
+server_idm_listen_address: "{{ addressing[inventory_hostname].address | ansible.utils.ipaddr('address') }}"
+server_idm_realm: "{{ resolv.domains.internal }}"
+server_idm_subject: "{{ vault_server_idm.subject }}"
+server_idm_common_name: "{{ vault_server_idm.common_name }}"

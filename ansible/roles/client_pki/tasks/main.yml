@@ -25,17 +25,31 @@
     mode: "0644"
   register: client_pki_copy_result
 
+- name: Copy to remote host  - RPM
+  when: client_pki_os == 'alma'
+  ansible.builtin.copy:
+    dest: /tmp/
+    # Not using the result since when the package is already downloaded, the 'dest' isnt set.
+    src: /tmp/step-cli_amd64.rpm
+    mode: "0644"
+  register: client_pki_copy_result
+
 - name: Install the stepcli - DEB
   when: client_pki_os == 'debian'
   ansible.builtin.apt:
     deb: /tmp/step-cli_amd64.deb
 
-- name: Install the stepca and stepcli - RPM
+- name: Install the stepcli - RPM
   when: client_pki_os == 'alma'
   ansible.builtin.dnf:
     name: /tmp/step-cli_amd64.rpm
     disable_gpg_check: true
     state: present
+
+- name: Remove the .step folder
+  ansible.builtin.file:
+    path: ~/.step
+    state: absent
 
 - name: Bootstrap the step-cli
   ansible.builtin.command:

@@ -51,54 +51,137 @@
     line: "{{ server_pki_password }}"
   register: pki_pass_file_result
 
-- name: Create the Certificate Authority
-  become: true
-  become_method: ansible.builtin.sudo
-  become_user: "{{ server_pki_system_user }}"
-  environment:
-    STEPPATH: "{{ server_pki_system_home }}"
-  ansible.builtin.command: >-
-    step ca init --ssh --acme \
-      --authority={{ server_pki_authority | quote }} --address={{ server_pki_listen ~ ':443' }} \
-      --dns={{ server_pki_dns }} --deployment-type=standalone --name={{ server_pki_authority | quote }} \
-      --remote-management --provisioner={{ server_pki_username | quote }} \
-      --password-file={{ server_pki_system_home }}/credentials.txt
-  register: pki_create_ca
-  changed_when: pki_create_ca.rc == 0
-
-- name: Configure the Claims
+- name: Configure the StepCA Server
   become: true
   become_method: ansible.builtin.sudo
   environment:
     STEPPATH: "{{ server_pki_system_home }}"
   become_user: "{{ server_pki_system_user }}"
-  ansible.builtin.shell: "jq '.authority.claims={{ claims | ansible.builtin.to_json }}' \
-    \"$(step path)/config/ca.json\" >> /tmp/ca.json"
   vars:
-    claims:
-      minTLSCertDuration: 5m
-      maxTLSCertDuration: 8760h
-      defaultTLSCertDuration": 8760h
-      disableRenewal: false
-      allowRenewalAfterExpiry: false
-      minHostSSHCertDuration: 5m
-      maxHostSSHCertDuration: 1680h
-      defaultHostSSHCertDuration: 8760h
-      minUserSSHCertDuration: 5m
-      maxUserSSHCertDuration: 8760h
-      defaultUserSSHCertDuration: 8760h
-  register: pki_edit_claims_result
-  changed_when: pki_edit_claims_result == 0
+    authority_path: "{{ server_pki_system_home ~ '/authorities/' ~ server_pki_authority }}"
+  block:
+    - name: Create the Certificate Authority
+      ansible.builtin.command: >-
+        step ca init --ssh --acme \
+          --authority={{ server_pki_authority | quote }} --address={{ server_pki_listen ~ ':443' }} \
+          --dns={{ server_pki_dns }} --deployment-type=standalone --name={{ server_pki_authority | quote }} \
+          --provisioner={{ server_pki_username | quote }} \
+          --password-file={{ server_pki_system_home }}/credentials.txt
+      register: pki_create_ca
+      changed_when: pki_create_ca.rc == 0
 
-- name: Move the new configuration
-  become: true
-  become_method: ansible.builtin.sudo
-  environment:
-    STEPPATH: "{{ server_pki_system_home }}"
-  become_user: "{{ server_pki_system_user }}"
-  ansible.builtin.shell: mv /tmp/ca.json "$(step path)/config/ca.json"
-  register: pki_move_claims_result
-  changed_when: pki_move_claims_result == 0
+    - name: Move the root and intermediate certificates
+      ansible.builtin.copy:
+        src: "vault/{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "600"
+        owner: "{{ server_pki_system_user }}"
+        group: "{{ server_pki_system_group }}"
+      loop:
+        - src: ca.cert.pem
+          dest: "{{ authority_path }}/certs/root_ca.crt"
+        - src: intermediate.cert.pem
+          dest: "{{ authority_path }}/certs/intermediate_ca.crt"
+        - src: intermediate.key.pem
+          dest: "{{ authority_path }}/secrets/intermediate_ca_key"
+
+    - name: Configure the Claims
+      ansible.builtin.shell: "jq '.authority.claims={{ claims | ansible.builtin.to_json }}' \
+        \"$(step path)/config/ca.json\" > /tmp/ca.json"
+      vars:
+        claims:
+          minTLSCertDuration: 5m
+          maxTLSCertDuration: 8760h
+          defaultTLSCertDuration: 8760h
+          disableRenewal: false
+          allowRenewalAfterExpiry: false
+          minHostSSHCertDuration: 5m
+          maxHostSSHCertDuration: 1680h
+          defaultHostSSHCertDuration: 8760h
+          minUserSSHCertDuration: 5m
+          maxUserSSHCertDuration: 8760h
+          defaultUserSSHCertDuration: 8760h
+      register: pki_edit_claims_result
+      changed_when: pki_edit_claims_result == 0
+
+    - name: Configure the Remote Management
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          cat /tmp/ca.json | jq '.authority.enableAdmin=true' > /tmp/ca.json
+        executable: /usr/bin/bash
+      register: pki_edit_remote_result
+      changed_when: pki_edit_remote_result == 0
+
+
+    - name: Configure the Policy
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          cat /tmp/ca.json | jq '.authority.policy={{ policy | ansible.builtin.to_json }}' > /tmp/ca.json
+        executable: /usr/bin/bash
+      vars:
+        policy:
+          x509:
+            allow:
+              dns:
+                - "{{ resolv.domains.internal }}"
+                - "*.{{ resolv.domains.internal }}"
+              ip:
+                - "{{ networking.supernet }}"
+      register: pki_edit_policy_result
+      changed_when: pki_edit_policy_result == 0
+
+    - name: Configure x509 options
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          cat /tmp/ca.json | jq '.authority.provisioners[0].options={{  x509_options | ansible.builtin.to_json }}' > /tmp/ca.json
+        executable: /usr/bin/bash
+      vars:
+        x509_options:
+          x509:
+            templateFile: templates/certs/x509_intermediate.tpl
+      register: pki_edit_options_result
+      changed_when: pki_edit_options_result == 0
+
+    - name: Move the new configuration
+      ansible.builtin.shell: mv /tmp/ca.json "$(step path)/config/ca.json"
+      register: pki_move_claims_result
+      changed_when: pki_move_claims_result == 0
+
+    - name: Create the folder for templates
+      ansible.builtin.command:
+        cmd: "mkdir -p {{ authority_path | quote }}/templates/certs/"
+        creates: "{{ authority_path | quote }}/templates/certs/"
+
+    - name: Template the StepCA templates
+      become: false
+      ansible.builtin.template:
+        owner: "{{ server_pki_system_user }}"
+        group: "{{ server_pki_system_group }}"
+        src: "{{ item }}"
+        dest: "{{ authority_path }}/templates/certs/{{ item | replace('.j2', '') }}"
+        mode: "644"
+      loop:
+        - x509_leaf.tpl.j2
+        - x509_intermediate.tpl.j2
+
+    - name: Create the intermediate provisioner
+      environment:
+        CERTPASS: "{{ server_pki_password }}"
+        PROVISIONER: "{{ server_pki_intermediate_password }}"
+      ansible.builtin.shell:
+        cmd: |
+          step ca provisioner add {{ server_pki_intermediate_username }} --type=JWK --create \
+          --x509-template='{{ authority_path }}/templates/certs/x509_leaf.tpl' \
+          --password-file=<(printf "%s" "$PROVISIONER") \
+          --x509-default-dur=17520h --admin-name={{ server_pki_admin_name }} \
+          --admin-provisioner {{ server_pki_username }} --admin-password-file=<(printf "%s" "$CERTPASS")
+        executable: /usr/bin/bash
+      register: pki_create_provisioner
+      changed_when: pki_create_provisioner.rc == 0
+
 
 - name: Configure the systemd unit
   ansible.builtin.template:
@@ -106,5 +189,5 @@
     dest: /etc/systemd/system/stepca.service
     mode: "0644"
   notify:
-    - Handler - Enable and Start the Systemd
+    - Handler - Reload systemd
     - Handler - Enable and start the StepCA Service

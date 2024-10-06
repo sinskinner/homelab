@@ -1,0 +1,1 @@
+lxc_config_disk: "local-lvm:4"

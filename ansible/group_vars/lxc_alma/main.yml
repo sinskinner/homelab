@@ -1,0 +1,4 @@
+os_type: alma
+lxc_config_ostemplate: local:vztmpl/almalinux-9-default_20240911_amd64.tar.xz
+lxc_config_memory: 1536
+ansible_python_interpreter: /usr/bin/python3.9

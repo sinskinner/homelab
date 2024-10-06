@@ -1,1 +1,1 @@
-misc_motd_distro: "debian"
+misc_motd_distro: "{{ os_type }}"

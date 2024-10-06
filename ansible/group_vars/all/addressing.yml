@@ -47,6 +47,12 @@ addressing:
   cert-01-m:
     address: 172.30.194.6/24
     group: management
+  idm-01:
+    address: 172.30.193.7/24
+    group: idm
+  idm-01-m:
+    address: 172.30.194.7/24
+    group: management
   border-01-m:
     address: 172.30.194.254/24
     group: border

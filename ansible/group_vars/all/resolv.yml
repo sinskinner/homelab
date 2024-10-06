@@ -25,3 +25,6 @@ resolv:
       certificates:
         type: CNAME
         target: cert-01
+      idm:
+        type: CNAME
+        target: idm-01

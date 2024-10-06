@@ -1,0 +1,1 @@
+lxc_alma_proxy: "{{ misc_proxy.access }}"

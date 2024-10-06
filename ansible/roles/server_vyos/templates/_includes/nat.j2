@@ -16,12 +16,15 @@ nat {
         rule 5 {
             description "Redirect NTP to internal NTP"
             destination {
-                address !{{ server_vyos_hosts['ntp-01'] | ansible.utils.ipaddr('address') }}
+                address !{{ server_vyos_hosts['ntp-01'].address | ansible.utils.ipaddr('address') }}
                 port 123
+            }
+            source {
+                address !{{ server_vyos_hosts['ntp-01'].address | ansible.utils.ipaddr('address') }}
             }
             protocol udp
             translation {
-                address {{ server_vyos_hosts['ntp-01'] | ansible.utils.ipaddr('address') }}
+                address {{ server_vyos_hosts['ntp-01'].address | ansible.utils.ipaddr('address') }}
                 port 123
             }
         }

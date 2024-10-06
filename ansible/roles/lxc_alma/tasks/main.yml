@@ -1,0 +1,12 @@
+- name: Configure proxy for dnf
+  ansible.builtin.blockinfile:
+    path: /etc/dnf/dnf.conf
+    content: |
+      proxy={{ lxc_alma_proxy }}
+    mode: "644"
+
+- name: Update the System
+  ansible.builtin.dnf:
+    name: "*"
+    update_only: true
+    state: latest

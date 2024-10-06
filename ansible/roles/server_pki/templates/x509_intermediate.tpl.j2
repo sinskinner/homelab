@@ -1,0 +1,19 @@
+{% raw %}
+{
+    "subject": {{ toJson .Subject }},
+    "sans": {{ toJson .SANs }},
+{{- if typeIs "*rsa.PublicKey" .Insecure.CR.PublicKey }}
+    "keyUsage": ["keyEncipherment", "digitalSignature", "certSign", "crlSign"],
+{{- else }}
+    "keyUsage": ["digitalSignature"],
+{{- end }}
+{% endraw %}
+    "extKeyUsage": ["serverAuth", "clientAuth"],
+    "crlDistributionPoints": "https://{{server_pki_dns}}/intermediate_ca.crl",
+    "issuingCertificateURL": "https://{{server_pki_dns}}/intermediate_ca.crt",
+    "ocspServer": "https://{{server_pki_dns}}/",
+    "basicConstraints": {
+        "isCA": true,
+        "maxPathLen": 1
+    }
+}

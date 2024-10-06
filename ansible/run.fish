@@ -16,4 +16,6 @@ switch $_flag_p
     case 'reload-ns'
         $ANSIBLE_COMMAND -l ns --start-at-task "Create/Update the NS Records" \
             -e server_ns_create_zone=true $argv
+    case 'firewall'
+        ansible-playbook -i inventories/core.yml playbook-router.yml $argv
 end

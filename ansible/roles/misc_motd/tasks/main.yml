@@ -4,11 +4,19 @@
     path: /etc/update-motd.d/10-uname
     state: absent
 
-- name: Copy the dynamic MOTD
+- name: Copy the dynamic MOTD - Debian
+  when: misc_motd_distro == 'debian'
   ansible.builtin.copy:
     src: 50-motd
     mode: "0755"
     dest: /etc/update-motd.d/50-motd
+
+- name: Copy the dynamic MOTD - Alma
+  when: misc_motd_distro == 'alma'
+  ansible.builtin.copy:
+    src: 50-motd
+    mode: "0755"
+    dest: /etc/profile.d/50-motd.sh
 
 - name: Remove the default /etc/motd
   ansible.builtin.file:

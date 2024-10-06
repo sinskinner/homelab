@@ -17,3 +17,24 @@ rule 10 {
         address {{ server_vyos_hosts['ntp-01'].address | ansible.utils.ipaddr('address') }}
     }
 }
+
+rule 15 {
+    action accept
+    protocol udp
+    description "Permitir DNS Interno"
+    destination {
+        port 53
+        address {{ server_vyos_hosts['dns-01'].address | ansible.utils.ipaddr('address') }}
+    }
+}
+
+
+rule 20 {
+  action accept
+  protocol tcp
+  description "Proxy Access to the HTTP and HTTPS"
+  destination {
+    address {{ server_vyos_hosts['proxy-01'].address | ansible.utils.ipaddr('address') }}
+    port 3128
+  }
+}

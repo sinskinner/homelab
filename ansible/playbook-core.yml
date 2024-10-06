@@ -3,6 +3,7 @@
   hosts: lxc
   roles:
     - lxc
+    - server_openssh
 
 - name: Configure the Debian LXC
   gather_facts: false
@@ -10,7 +11,13 @@
   roles:
     - lxc_debian
     - misc_motd
-    - server_openssh
+
+- name: Configure the Alma LXC
+  gather_facts: false
+  hosts: lxc_alma
+  roles:
+    - lxc_alma
+    - misc_motd
 
 - name: Configure the Proxy Server
   gather_facts: false
@@ -61,3 +68,9 @@
   tags: client_pki
   roles:
     - client_pki
+
+- name: Configure the IDM Server
+  gather_facts: false
+  hosts: idm
+  roles:
+    - server_idm

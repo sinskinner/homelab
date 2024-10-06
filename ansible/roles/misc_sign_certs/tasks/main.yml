@@ -1,0 +1,16 @@
+- name: Retrieve the step-cli token
+  environment:
+    CERTPASS: "{{ misc_sign_certs_provisioners[misc_sign_certs_provisioner].pass }}"
+  ansible.builtin.shell:
+    executable: /usr/bin/bash
+    cmd: |
+      step ca token --provisioner {{ misc_sign_certs_provisioners[misc_sign_certs_provisioner].user }} \
+      --password-file <(printf "%s" "$CERTPASS") {{ misc_sign_certs_subject | quote }}
+  register: misc_sign_cert_token_result
+  changed_when: misc_sign_cert_token_result.rc == 0
+
+- name: Sign the CSR
+  ansible.builtin.command:
+    cmd: "step ca sign --token {{ misc_sign_cert_token_result.stdout | quote }} \
+      {{ misc_sign_certs_csr_path | quote }} {{ misc_sign_certs_crt_path | quote }}"
+    creates: "{{ misc_sign_certs_crt_path }}"

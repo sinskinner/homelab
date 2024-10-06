@@ -1,0 +1,46 @@
+- name: Install the FreeIPA Server
+  ansible.builtin.dnf:
+    name: ipa-server
+
+- name: Configure the FreeIPA Server - Step 1
+  ansible.builtin.command:
+    cmd: "ipa-server-install --realm={{ server_idm_realm }} \
+      --ds-password={{ server_idm_ds_password }} \
+      --domain={{ server_idm_domain }} \
+      --ip-address={{ server_idm_listen_address }}
+      --hostname={{ server_idm_hostname }} \
+      --admin-password={{ server_idm_admin_password }} \
+      --unattended \
+      --ca-subject={{ server_idm_subject | quote }}
+      --external-ca \
+      --external-ca-type=generic \
+      --no-ntp \
+      --skip-mem-check"
+  changed_when: true
+
+- name: Sign the Certificate
+  vars:
+    misc_sign_certs_provisioner: main
+    misc_sign_certs_subject: "{{ server_idm_common_name }}"
+    misc_sign_certs_csr_path: "~/ipa.csr"
+    misc_sign_certs_crt_path: "~/ipa.crt"
+  ansible.builtin.include_role:
+    name: misc_sign_certs
+
+- name: Configure the FreeIPA Server - Step 2
+  ansible.builtin.command:
+    cmd: "ipa-server-install --realm={{ server_idm_realm }} \
+      --ds-password={{ server_idm_ds_password }} \
+      --domain={{ server_idm_domain }} \
+      --ip-address={{ server_idm_listen_address }}
+      --hostname={{ server_idm_hostname }} \
+      --admin-password={{ server_idm_admin_password }} \
+      --ca-subject={{ server_idm_subject | quote }} \
+      --unattended \
+      --external-ca \
+      --external-ca-type=generic \
+      --no-ntp \
+      --skip-mem-check \
+      --external-cert-file=/root/ipa.crt \
+      --external-cert-file=/root/.step/certs/root_ca.crt"
+  changed_when: true

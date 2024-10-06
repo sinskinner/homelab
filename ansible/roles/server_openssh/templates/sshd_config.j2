@@ -27,7 +27,9 @@ MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@op
 HostKey /etc/ssh/ssh_host_ed25519_key
 HostKey /etc/ssh/ssh_host_rsa_key
 KexAlgorithms sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group18-sha512,diffie-hellman-group16-sha512
+{% if server_openssh_os_type == 'debian' %}
 DebianBanner no
+{% endif %}
 ClientAliveCountMax 2
 ClientAliveInterval 300
 Compression no

@@ -16,6 +16,7 @@ lxc:
     ntp-01:
     ns-01:
     cert-01:
+    idm-01:
 
 lxc_debian:
   hosts:
@@ -26,6 +27,10 @@ lxc_debian:
     ns-01:
     cert-01:
 
+lxc_alma:
+  hosts:
+    idm-01:
+
 proxmox_hosts:
   hosts:
     proxy-01:
@@ -34,6 +39,7 @@ proxmox_hosts:
     ntp-01:
     ns-01:
     cert-01:
+    idm-01:
 
 proxy:
   hosts:
@@ -63,3 +69,8 @@ pki:
   hosts:
     cert-01:
       ansible_host: 172.30.194.6
+
+idm:
+  hosts:
+    idm-01:
+      ansible_host: 172.30.194.7

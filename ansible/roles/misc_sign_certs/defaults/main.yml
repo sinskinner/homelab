@@ -1,0 +1,5 @@
+misc_sign_certs_provisioner:
+misc_sign_certs_provisioners: "{{ vault_server_pki.provisioners }}"
+misc_sign_certs_subject:
+misc_sign_certs_csr_path:
+misc_sign_certs_crt_path:
